@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub & Analytics</title>
+    <title>Meeting Room Hub - Enterprise & Check-In System</title>
     <style>
         :root {
             --bg-main: #080b11;
@@ -143,7 +143,7 @@
         .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value { font-size: 1.85rem; font-weight: 800; }
 
-        /* ANALYTICS SECTION (GRAFIK & DEPARTEMEN) */
+        /* ANALYTICS SECTION */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -201,11 +201,6 @@
             background: linear-gradient(180deg, var(--accent-blue-bright), var(--accent-blue));
             border-radius: 6px 6px 2px 2px;
             transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-        }
-
-        .chart-bar:hover {
-            filter: brightness(1.2);
         }
 
         .chart-label {
@@ -213,7 +208,7 @@
             color: var(--text-secondary);
         }
 
-        /* Department Progress Rows */
+        /* Department Rows */
         .dept-list {
             display: flex;
             flex-direction: column;
@@ -391,7 +386,7 @@
             border-radius: 20px;
             padding: 1.75rem;
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
         }
 
@@ -407,7 +402,12 @@
             margin-top: 4px;
         }
 
-        /* Breakpoint Adjustments */
+        .form-select option {
+            background: #111827;
+            color: white;
+        }
+
+        /* Breakpoints */
         @media (min-width: 640px) {
             .stats-grid { grid-template-columns: repeat(4, 1fr); }
         }
@@ -459,10 +459,10 @@
             </div>
         </section>
 
-        <!-- ANALYTICS SECTION (GRAFIK JAM SIBUK & DEPARTEMEN PENGGUNA) -->
+        <!-- ANALYTICS SECTION -->
         <section class="analytics-grid">
             
-            <!-- Grafik Penggunaan Jam Sibuk -->
+            <!-- Peak Usage Hours -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
@@ -496,11 +496,9 @@
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">🏢 Departemen Pengguna</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Bulan Ini</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Statistik Realtime</span>
                 </div>
-                <div class="dept-list" id="departmentStatsContainer">
-                    <!-- Progress Rows Rendered Dynamically -->
-                </div>
+                <div class="dept-list" id="departmentStatsContainer"></div>
             </div>
 
         </section>
@@ -521,6 +519,60 @@
         <!-- Room Cards Grid -->
         <main class="rooms-grid" id="roomsContainer"></main>
 
+    </div>
+
+    <!-- MODAL FORM CHECK-IN (DEPARTEMEN, PESERTA & DURASI) -->
+    <div id="checkInModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
+            <p id="checkInRoomTitle" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; margin-bottom: 1rem;"></p>
+            
+            <form id="checkInForm" onsubmit="processCheckIn(event)">
+                <input type="hidden" id="checkInRoomId">
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai</label>
+                    <select id="checkInDept" class="form-select" required>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Product & Design">Product & Design</option>
+                        <option value="Marketing & Sales">Marketing & Sales</option>
+                        <option value="HR & Operations">HR & Operations</option>
+                        <option value="Finance & Executive">Finance & Executive</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Jumlah Orang (Peserta)</label>
+                    <input type="number" id="checkInPeople" class="form-input" min="1" required placeholder="Contoh: 6">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Waktu / Durasi Penggunaan</label>
+                    <select id="checkInDuration" class="form-select" required>
+                        <option value="30 Menit">30 Menit</option>
+                        <option value="1 Jam (60 Min)" selected>1 Jam (60 Menit)</option>
+                        <option value="1.5 Jam (90 Min)">1.5 Jam (90 Menit)</option>
+                        <option value="2 Jam (120 Min)">2 Jam (120 Menit)</option>
+                        <option value="Half Day (>3 Jam)">Half Day (>3 Jam)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama PIC / Penanggung Jawab</label>
+                    <input type="text" id="checkInPic" class="form-input" required placeholder="Contoh: Alex (Engineering Lead)">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Agenda / Subjek Meeting</label>
+                    <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Sprint Planning Q3">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-full btn-ghost" onclick="closeModal('checkInModal')">Batal</button>
+                    <button type="submit" class="btn-full btn-blue">Konfirmasi Check-In</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL PIN SECURITY -->
@@ -549,22 +601,18 @@
                     <input type="text" id="roomLocation" class="form-input" required placeholder="LANTAI 3 • SAYAP BARAT">
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kapasitas (Orang)</label>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kapasitas Maksimal (Orang)</label>
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai Utama</label>
                     <select id="roomDepartment" class="form-select">
                         <option value="Engineering">Engineering</option>
                         <option value="Product & Design">Product & Design</option>
                         <option value="Marketing & Sales">Marketing & Sales</option>
                         <option value="HR & Operations">HR & Operations</option>
-                        <option value="Executive Board">Executive Board</option>
+                        <option value="Finance & Executive">Finance & Executive</option>
                     </select>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Subjek Meeting Berlangsung (Opsional)</label>
-                    <input type="text" id="meetingSubject" class="form-input" placeholder="Sprint Review & Planning Q3">
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full btn-ghost" onclick="closeModal('roomModal')">Batal</button>
@@ -582,10 +630,10 @@
         let activeFilter = 'ALL';
 
         const defaultRooms = [
-            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, department: 'Engineering', status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '10:00 - 11:30 AM' },
-            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, department: 'Product & Design', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, department: 'Executive Board', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, department: 'Marketing & Sales', status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
+            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, peopleCount: 8, department: 'Engineering', status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '1.5 Jam (90 Min)' },
+            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, peopleCount: 0, department: 'Product & Design', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, peopleCount: 0, department: 'Finance & Executive', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, peopleCount: 0, department: 'Marketing & Sales', status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
         ];
 
         let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
@@ -633,9 +681,65 @@
             }
         }
 
-        /* Render Dashboard & Department Analytics */
+        /* Modal Check-In Handlers */
+        function openCheckInModal(roomId) {
+            const room = rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            document.getElementById('checkInRoomId').value = room.id;
+            document.getElementById('checkInRoomTitle').innerText = `${room.name} (${room.location}) — Max Cap: ${room.capacity} Orang`;
+            document.getElementById('checkInPeople').max = room.capacity;
+            document.getElementById('checkInForm').reset();
+            document.getElementById('checkInModal').style.display = 'flex';
+        }
+
+        function processCheckIn(e) {
+            e.preventDefault();
+            const id = document.getElementById('checkInRoomId').value;
+            const dept = document.getElementById('checkInDept').value;
+            const people = parseInt(document.getElementById('checkInPeople').value);
+            const duration = document.getElementById('checkInDuration').value;
+            const pic = document.getElementById('checkInPic').value;
+            const subject = document.getElementById('checkInSubject').value;
+
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    return {
+                        ...r,
+                        status: 'OCCUPIED',
+                        department: dept,
+                        peopleCount: people,
+                        time: duration,
+                        pic: pic,
+                        activeMeeting: subject
+                    };
+                }
+                return r;
+            });
+
+            saveDataAndSync();
+            closeModal('checkInModal');
+        }
+
+        function checkoutRoom(id) {
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    return {
+                        ...r,
+                        status: 'AVAILABLE',
+                        peopleCount: 0,
+                        activeMeeting: '',
+                        pic: '',
+                        time: ''
+                    };
+                }
+                return r;
+            });
+            saveDataAndSync();
+        }
+
+        /* Render Dashboard & Analytics */
         function renderDashboard() {
-            // Stats Summary Calculation
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
             const maintenance = rooms.filter(r => r.status === 'MAINTENANCE').length;
@@ -645,10 +749,8 @@
             document.getElementById('statMaintenance').innerText = maintenance;
             document.getElementById('statTotal').innerText = rooms.length;
 
-            // Render Department Usage Breakdown
             renderDepartmentAnalytics();
 
-            // Filter Rooms
             let filteredRooms = rooms;
             if (activeFilter !== 'ALL') {
                 filteredRooms = rooms.filter(r => r.status === activeFilter);
@@ -680,18 +782,18 @@
                         <div class="active-meeting-panel">
                             <span style="font-size: 0.725rem; color: var(--text-secondary);">Meeting Berlangsung:</span>
                             <span style="font-size: 0.9rem; font-weight: 700;">${room.activeMeeting || 'Diskusi Tim'}</span>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: var(--text-secondary); margin-top: 4px;">
-                                <span>👤 ${room.pic || 'Staf Kantor'}</span>
-                                <span>🕒 ${room.time || '10:00 AM'}</span>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: var(--text-secondary); margin-top: 6px;">
+                                <span>👤 ${room.pic || 'Staf Kantor'} (${room.peopleCount || 1} Orang)</span>
+                                <span>🕒 ${room.time || '1 Jam'}</span>
                             </div>
                         </div>
                     ` : ''}
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${room.status !== 'MAINTENANCE' ? `
-                            <button class="btn-full ${room.status === 'AVAILABLE' ? 'btn-blue' : 'btn-ghost'}" onclick="toggleRoomStatus('${room.id}')">
-                                ${room.status === 'AVAILABLE' ? 'Check-In Ruangan' : 'Selesaikan Meeting'}
-                            </button>
+                        ${room.status === 'AVAILABLE' ? `
+                            <button class="btn-full btn-blue" onclick="openCheckInModal('${room.id}')">Check-In Ruangan</button>
+                        ` : room.status === 'OCCUPIED' ? `
+                            <button class="btn-full btn-ghost" onclick="checkoutRoom('${room.id}')">Selesaikan Meeting</button>
                         ` : '<button class="btn-full btn-ghost" disabled style="opacity: 0.5;">Sedang Maintenance</button>'}
 
                         ${isAdminMode ? `
@@ -707,21 +809,31 @@
             `).join('');
         }
 
-        /* Render Department Progress Bars */
+        /* Render Hitung Statistik Departemen Secara Realtime */
         function renderDepartmentAnalytics() {
-            const deptCounts = {
-                'Engineering': 45,
-                'Product & Design': 25,
-                'Marketing & Sales': 18,
-                'HR & Operations': 12
+            const counts = {
+                'Engineering': 0,
+                'Product & Design': 0,
+                'Marketing & Sales': 0,
+                'HR & Operations': 0,
+                'Finance & Executive': 0
             };
 
+            let totalActive = 0;
+            rooms.forEach(r => {
+                if (r.department && counts[r.department] !== undefined) {
+                    counts[r.department] += (r.status === 'OCCUPIED' ? 2 : 1);
+                    totalActive += (r.status === 'OCCUPIED' ? 2 : 1);
+                }
+            });
+
             const container = document.getElementById('departmentStatsContainer');
-            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'];
             let index = 0;
 
-            container.innerHTML = Object.keys(deptCounts).map(dept => {
-                const percent = deptCounts[dept];
+            container.innerHTML = Object.keys(counts).map(dept => {
+                const val = counts[dept];
+                const percent = totalActive > 0 ? Math.round((val / totalActive) * 100) : 0;
                 const color = colors[index % colors.length];
                 index++;
                 return `
@@ -736,17 +848,6 @@
                     </div>
                 `;
             }).join('');
-        }
-
-        function toggleRoomStatus(id) {
-            rooms = rooms.map(r => {
-                if (r.id === id) {
-                    const next = r.status === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
-                    return { ...r, status: next };
-                }
-                return r;
-            });
-            saveDataAndSync();
         }
 
         function toggleMaintenance(id) {
@@ -782,18 +883,18 @@
             const location = document.getElementById('roomLocation').value;
             const capacity = parseInt(document.getElementById('roomCapacity').value);
             const department = document.getElementById('roomDepartment').value;
-            const activeMeeting = document.getElementById('meetingSubject').value;
 
             rooms.push({
                 id: Date.now().toString(),
                 name,
                 location,
                 capacity,
+                peopleCount: 0,
                 department,
                 status: 'AVAILABLE',
-                activeMeeting,
-                pic: 'Admin Kantor',
-                time: '10:00 AM'
+                activeMeeting: '',
+                pic: '',
+                time: ''
             });
 
             saveDataAndSync();
