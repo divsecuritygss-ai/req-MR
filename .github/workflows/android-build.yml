@@ -1,0 +1,52 @@
+STREAMING_CHUNK:Configuring Workflow Trigger and Environment...name: Build Android APK Cloud Engineon:push:branches: [ "main", "master" ]workflow_dispatch: # Memungkinkan tombol "Run Workflow" manual dari Web GitHubjobs:build-android:runs-on: ubuntu-lateststeps:
+  # STREAMING_CHUNK:Checking out code & Setting up Node and Java...
+  - name: Checkout Code
+    uses: actions/checkout@v4
+
+  - name: Setup Node.js Environment
+    uses: actions/setup-node@v4
+    with:
+      node-version: 20
+      cache: 'npm'
+
+  - name: Setup Java JDK 17 (Required for Android Gradle)
+    uses: actions/setup-java@v4
+    with:
+      distribution: 'zulu'
+      java-version: '17'
+
+  - name: Setup Android SDK Tools
+    uses: android-actions/setup-android@v3
+
+  # STREAMING_CHUNK:Installing Dependencies & Building Web...
+  - name: Install NPM Dependencies
+    run: |
+      npm install --legacy-peer-deps
+
+  - name: Build Web Application
+    run: |
+      npm run build --if-present
+
+  # STREAMING_CHUNK:Syncing Capacitor and Compiling APK...
+  - name: Capacitor Sync Android
+    run: |
+      npx cap add android || true
+      npx cap sync android
+
+  - name: Grant Execute Permission for Gradle Wrapper
+    run: |
+      cd android
+      chmod +x gradlew
+
+  - name: Build Android APK (Debug Build)
+    run: |
+      cd android
+      ./gradlew assembleDebug --stacktrace
+
+  # STREAMING_CHUNK:Uploading Artifact APK Result...
+  - name: Upload APK Ready Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: MeetingHub-Android-APK
+      path: android/app/build/outputs/apk/debug/app-debug.apk
+      retention-days: 7
