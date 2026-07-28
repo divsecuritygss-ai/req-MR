@@ -1,4 +1,4 @@
-steps:
+STREAMING_CHUNK:Configuring Workflow Trigger and Environment...name: Build Android APK Cloud Engineon:push:branches: [ "main", "master" ]workflow_dispatch: # Memungkinkan tombol "Run Workflow" manual dari Web GitHubjobs:build-android:runs-on: ubuntu-lateststeps:
   # STREAMING_CHUNK:Checking out code & Setting up Node and Java...
   - name: Checkout Code
     uses: actions/checkout@v4
