@@ -30,75 +30,21 @@ jobs:
       - name: Initialize Project & Capacitor
         run: |
           rm -rf android
-
-          if [ ! -f package.json ]; then
-            npm init -y
-          fi
-
+          if [ ! -f package.json ]; then npm init -y; fi
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-
-          if [ ! -f capacitor.config.json ]; then
-            cat << 'EOF' > capacitor.config.json
-            {
-              "appId": "com.company.meetingroom",
-              "appName": "Meeting Room App",
-              "webDir": ".",
-              "server": {
-                "androidScheme": "https"
-              }
-            }
-            EOF
-          fi
-
+          echo '{"appId":"com.company.meetingroom","appName":"Meeting Room App","webDir":".","server":{"androidScheme":"https"}}' > capacitor.config.json
           npx cap add android
 
-      - name: Inject Clean AndroidManifest with Permissions
+      - name: Inject Permissions into AndroidManifest
         run: |
-          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.VIBRATE" />
-              <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-              <uses-feature android:name="android.hardware.camera" android:required="false" />
-
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="Meeting Room"
-                  android:roundIcon="@mipmap/ic_launcher_round"
-                  android:supportsRtl="true"
-                  android:theme="@style/AppTheme"
-                  android:hardwareAccelerated="true">
-
-                  <activity
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-                      android:name=".MainActivity"
-                      android:label="Meeting Room"
-                      android:theme="@style/AppTheme.NoActionBarLaunch"
-                      android:launchMode="singleTask"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-
-                  <provider
-                      android:name="androidx.core.content.FileProvider"
-                      android:authorities="${applicationId}.fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/file_paths" />
-                  </provider>
-              </application>
-          </manifest>
-          EOF
+          node -e '
+          const fs = require("fs");
+          const path = "android/app/src/main/AndroidManifest.xml";
+          let content = fs.readFileSync(path, "utf8");
+          const perms = `\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n`;
+          content = content.replace("<application", perms + "    <application");
+          fs.writeFileSync(path, content);
+          '
 
       - name: Sync Capacitor
         run: |
