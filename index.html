@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Secured & Clean Analytics</title>
+    <title>Meeting Room Hub - Universal Cloud Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -51,7 +51,6 @@
             margin: 0 auto;
         }
 
-        /* Navbar Header */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -129,7 +128,6 @@
             color: var(--accent-green);
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -149,7 +147,6 @@
         .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value { font-size: 1.85rem; font-weight: 800; }
 
-        /* ANALYTICS SECTION */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -518,7 +515,6 @@
 
     <div class="app-viewport">
         
-        <!-- Header Navbar -->
         <header class="navbar">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <span class="brand-title">Meeting Hub</span>
@@ -532,7 +528,6 @@
             </div>
         </header>
 
-        <!-- Stats Grid -->
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="stat-title">Ruang Tersedia</span>
@@ -552,7 +547,6 @@
             </div>
         </section>
 
-        <!-- ANALYTICS SECTION -->
         <section class="analytics-grid">
             <div class="analytics-card">
                 <div class="analytics-header">
@@ -571,7 +565,6 @@
             </div>
         </section>
 
-        <!-- Controls Bar -->
         <section class="controls-bar">
             <div class="filter-group">
                 <button class="filter-btn active" onclick="setFilter('ALL', this)">Semua</button>
@@ -584,7 +577,6 @@
             </div>
         </section>
 
-        <!-- Room Cards Grid -->
         <main class="rooms-grid" id="roomsContainer"></main>
 
     </div>
@@ -686,7 +678,6 @@
         function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
         function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
 
-        // CHECK DATA LOKAL TERJABAK
         function checkLocalUnsyncedData() {
             const localRooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
             if (localRooms.length > 0 && rooms.length === 0) {
@@ -697,7 +688,6 @@
             }
         }
 
-        // AUTO MIGRASI/PUSH 26 DATA LOKAL KE GOOGLE SHEETS
         async function pushLocalDataToCloud() {
             const localRooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
             if (localRooms.length === 0) return;
@@ -706,30 +696,28 @@
             alert(`Sedang mengunggah ${localRooms.length} data ruangan dari HP ke Google Sheets...`);
 
             for (const rm of localRooms) {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "ADD_ROOM",
-                        id: rm.id || Date.now().toString(),
-                        name: rm.name,
-                        location: rm.location,
-                        capacity: rm.capacity,
-                        department: rm.department || "GENERAL"
-                    })
-                });
+                const payload = {
+                    action: "ADD_ROOM",
+                    id: rm.id || Date.now().toString(),
+                    name: rm.name,
+                    location: rm.location,
+                    capacity: rm.capacity,
+                    department: rm.department || "GENERAL"
+                };
+                const paramPayload = encodeURIComponent(JSON.stringify(payload));
+                await fetch(`${GOOGLE_SCRIPT_URL}?payload=${paramPayload}`, { method: 'GET', mode: 'cors' });
             }
 
             localStorage.removeItem('meeting_hub_rooms');
             document.getElementById('btnPushLocal').style.display = 'none';
-            alert('Berhasil! Seluruh data lokal HP kini telah tersimpan di Google Sheets.');
+            alert('Berhasil! Seluruh data lokal HP telah tersimpan di Google Sheets.');
             fetchCloudData();
         }
 
         async function fetchCloudData() {
             showLoading();
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`, { method: 'GET', mode: 'cors' });
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
@@ -744,22 +732,26 @@
             }
         }
 
+        // AKSI CLOUD UNIVERSAL BERBASIS GET (Bypass CORS Android WebView)
         async function sendCloudAction(payload) {
             showLoading();
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
+                const paramPayload = encodeURIComponent(JSON.stringify(payload));
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?payload=${paramPayload}`, {
+                    method: 'GET',
+                    mode: 'cors'
                 });
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
                     renderDashboard();
+                } else {
+                    alert("Gagal memperbarui: " + (data.message || "Error Cloud"));
                 }
             } catch (err) {
-                alert("Gagal memperbarui ke Google Sheets Cloud.");
+                console.error("Gagal mengirim ke Google Sheets:", err);
+                alert("Gagal memperbarui ke Google Sheets Cloud. Periksa jaringan internet.");
             } finally {
                 hideLoading();
             }
