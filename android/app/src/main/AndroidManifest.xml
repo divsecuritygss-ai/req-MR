@@ -1,61 +1,48 @@
-<!-- STREAMING_CHUNK:Declaring Hardware Permissions... -->
-<!-- Izin Internet & Real-time Sync -->
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)">
 
-<!-- Izin Kamera untuk QR Code Scanner -->
-<uses-permission android:name="android.permission.CAMERA" />
-<uses-feature android:name="android.hardware.camera" android:required="false" />
-<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-<!-- Izin Tablet Kiosk Display Mode (Layar tetap menyala) -->
-<uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
-<!-- Izin Haptics & Notifikasi -->
-<uses-permission android:name="android.permission.VIBRATE" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Meeting Room"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true">
 
-<!-- STREAMING_CHUNK:Application Architecture & Activity Config... -->
-<application
-    android:allowBackup="true"
-    android:icon="@mipmap/ic_launcher"
-    android:label="@string/app_name"
-    android:roundIcon="@mipmap/ic_launcher_round"
-    android:supportsRtl="true"
-    android:theme="@style/AppTheme"
-    android:usesCleartextTraffic="true"
-    android:hardwareAccelerated="true">
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:name=".MainActivity"
+            android:label="Meeting Room"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
 
-    <activity
-        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-        android:name=".MainActivity"
-        android:label="@string/title_activity_main"
-        android:theme="@style/AppTheme.NoActionBarLaunch"
-        android:launchMode="singleTask"
-        android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+        </activity>
 
-        <!-- Deep Linking Intent Filter jika mengakses via link website Vercel -->
-        <intent-filter android:autoVerify="true">
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https" android:host="your-meeting-app.vercel.app" />
-        </intent-filter>
-    </activity>
-
-    <!-- Provider File untuk Plugin Kamera/Media -->
-    <provider
-        android:name="androidx.core.content.FileProvider"
-        android:authorities="${applicationId}.fileprovider"
-        android:exported="false"
-        android:grantUriPermissions="true">
-        <meta-data
-            android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/file_paths" />
-    </provider>
-</application>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>
