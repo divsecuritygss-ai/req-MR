@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meeting Room Hub & Management</title>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-card: rgba(22, 30, 46, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        /* View Switcher Bar */
+        .mode-switcher {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-available { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-occupied { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-maintenance { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
+
+        /* Room Cards */
+        .room-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-info { display: flex; flex-direction: column; gap: 4px; }
+        .room-title { font-size: 1.1rem; font-weight: 700; }
+        .room-subtitle { font-size: 0.85rem; color: var(--text-secondary); }
+        .room-tags { font-size: 0.75rem; color: var(--accent-blue); margin-top: 4px; }
+
+        /* Buttons & Forms */
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-success { background: var(--accent-green); color: white; }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+        .btn-warning { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); border: 1px solid rgba(245, 158, 11, 0.4); }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label { font-size: 0.85rem; color: var(--text-secondary); }
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus { border-color: var(--accent-blue); }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* Stats Grid for Admin */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-number { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+        <button class="mode-btn active" onclick="switchView('karyawan')">📱 Karyawan App</button>
+        <button class="mode-btn" onclick="switchView('tablet')">🖥️ Tablet Pintu</button>
+        <button class="mode-btn" onclick="switchView('admin')">⚙️ Admin Panel</button>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        
+        <!-- 1. VIEW KARYAWAN -->
+        <div id="viewKaryawan">
+            <div class="header">
+                <div>
+                    <h2>Meeting Rooms</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Monitoring & Check-in Kantor</p>
+                </div>
+            </div>
+            <div id="karyawanRoomList"></div>
+        </div>
+
+        <!-- 2. VIEW TABLET PINTU -->
+        <div id="viewTablet" style="display: none;">
+            <div class="header">
+                <h2>Tablet Kiosk Display</h2>
+                <select id="tabletRoomSelect" class="form-control" onchange="renderTabletView()" style="width: auto;">
+                </select>
+            </div>
+            <div id="tabletDisplayArea" style="text-align: center; padding: 2rem 0;">
+            </div>
+        </div>
+
+        <!-- 3. VIEW ADMIN PANEL -->
+        <div id="viewAdmin" style="display: none;">
+            <div class="header">
+                <div>
+                    <h2>Kelola Ruangan</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Admin Management Dashboard</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddRoomModal()">+ Tambah Ruang</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Total Ruang</span>
+                    <div id="statTotal" class="stat-number">0</div>
+                </div>
+                <div class="stat-card">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Tersedia</span>
+                    <div id="statAvailable" class="stat-number" style="color: var(--accent-green);">0</div>
+                </div>
+                <div class="stat-card">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Terpakai</span>
+                    <div id="statOccupied" class="stat-number" style="color: var(--accent-red);">0</div>
+                </div>
+            </div>
+
+            <div id="adminRoomList"></div>
+        </div>
+
+    </div>
+
+    <!-- MODAL ADD/EDIT ROOM -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="margin-bottom: 1rem;">Tambah Ruang Meeting</h3>
+            <form id="roomForm" onsubmit="saveRoom(event)">
+                <input type="hidden" id="roomId">
+                <div class="form-group">
+                    <label>Nama Ruangan</label>
+                    <input type="text" id="roomName" class="form-control" placeholder="Contoh: Innovation 01" required>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi / Lantai</label>
+                    <input type="text" id="roomLocation" class="form-control" placeholder="Contoh: Lantai 3" required>
+                </div>
+                <div class="form-group">
+                    <label>Kapasitas (Orang)</label>
+                    <input type="number" id="roomCapacity" class="form-control" placeholder="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Fasilitas (Pisahkan koma)</label>
+                    <input type="text" id="roomFacilities" class="form-control" placeholder="TV, Whiteboard, Video Conf">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                    <button type="button" class="btn" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="closeModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT REALTIME & CRUD ENGINE -->
+    <script>
+        const syncChannel = new BroadcastChannel('meeting_hub_channel');
+        
+        // Initial Default Data
+        const defaultRooms = [
+            { id: '1', name: 'Innovation 01', location: 'Lantai 3', capacity: 10, status: 'AVAILABLE', facilities: 'TV 65", Whiteboard' },
+            { id: '2', name: 'Executive Room', location: 'Lantai 4', capacity: 20, status: 'OCCUPIED', facilities: 'Video Conf, Microphones' },
+            { id: '3', name: 'Brainstorm Pod', location: 'Lantai 2', capacity: 4, status: 'MAINTENANCE', facilities: 'Smart Screen' }
+        ];
+
+        // Load Rooms from LocalStorage or Use Default
+        let rooms = JSON.parse(localStorage.getItem('meeting_rooms')) || defaultRooms;
+
+        function saveData() {
+            localStorage.setItem('meeting_rooms', JSON.stringify(rooms));
+            syncChannel.postMessage({ type: 'DATA_UPDATED' });
+            renderAllViews();
+        }
+
+        // View Switcher
+        function switchView(viewName) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('viewKaryawan').style.display = viewName === 'karyawan' ? 'block' : 'none';
+            document.getElementById('viewTablet').style.display = viewName === 'tablet' ? 'block' : 'none';
+            document.getElementById('viewAdmin').style.display = viewName === 'admin' ? 'block' : 'none';
+
+            renderAllViews();
+        }
+
+        // Render Functions
+        function renderAllViews() {
+            renderKaryawanView();
+            renderTabletSelect();
+            renderTabletView();
+            renderAdminView();
+        }
+
+        function renderKaryawanView() {
+            const list = document.getElementById('karyawanRoomList');
+            list.innerHTML = rooms.map(room => `
+                <div class="room-card">
+                    <div class="room-info">
+                        <div class="room-title">${room.name}</div>
+                        <div class="room-subtitle">${room.location} • Kapasitas ${room.capacity} Orang</div>
+                        <div class="room-tags">💻 ${room.facilities}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="badge badge-${room.status.toLowerCase()}">
+                            <span class="dot"></span> ${room.status}
+                        </span>
+                        ${room.status !== 'MAINTENANCE' ? `
+                            <button class="btn btn-primary" style="margin-top: 8px; padding: 6px 12px; font-size: 0.75rem;" onclick="toggleStatus('${room.id}')">
+                                ${room.status === 'AVAILABLE' ? 'Check-In' : 'Selesai'}
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTabletSelect() {
+            const select = document.getElementById('tabletRoomSelect');
+            select.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        }
+
+        function renderTabletView() {
+            const selectedId = document.getElementById('tabletRoomSelect').value || (rooms[0] && rooms[0].id);
+            const room = rooms.find(r => r.id === selectedId);
+            const display = document.getElementById('tabletDisplayArea');
+
+            if (!room) {
+                display.innerHTML = '<p>Belum ada ruangan yang dikonfigurasi.</p>';
+                return;
+            }
+
+            display.innerHTML = `
+                <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">${room.name}</div>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${room.location} — Max ${room.capacity} Person</p>
+                <div class="badge badge-${room.status.toLowerCase()}" style="font-size: 1.5rem; padding: 12px 28px; border-radius: 30px;">
+                    <span class="dot" style="width: 14px; height: 14px;"></span> ${room.status}
+                </div>
+                <div style="margin-top: 2rem;">
+                    <button class="btn ${room.status === 'AVAILABLE' ? 'btn-success' : 'btn-danger'}" onclick="toggleStatus('${room.id}')" style="font-size: 1.1rem; padding: 12px 24px;">
+                        ${room.status === 'AVAILABLE' ? 'Tap QR Code Check-In' : 'Tap Selesaikan Meeting'}
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderAdminView() {
+            // Update Stats
+            document.getElementById('statTotal').innerText = rooms.length;
+            document.getElementById('statAvailable').innerText = rooms.filter(r => r.status === 'AVAILABLE').length;
+            document.getElementById('statOccupied').innerText = rooms.filter(r => r.status === 'OCCUPIED').length;
+
+            const list = document.getElementById('adminRoomList');
+            list.innerHTML = rooms.map(room => `
+                <div class="room-card">
+                    <div class="room-info">
+                        <div class="room-title">${room.name}</div>
+                        <div class="room-subtitle">${room.location} | Kapasitas: ${room.capacity}</div>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-warning" style="padding: 6px 10px; font-size: 0.75rem;" onclick="toggleMaintenance('${room.id}')">
+                            ${room.status === 'MAINTENANCE' ? 'Aktifkan' : 'Maintenance'}
+                        </button>
+                        <button class="btn" style="background: rgba(255,255,255,0.1); color: white; padding: 6px 10px; font-size: 0.75rem;" onclick="openEditRoomModal('${room.id}')">Edit</button>
+                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.75rem;" onclick="deleteRoom('${room.id}')">Hapus</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Action Handlers
+        function toggleStatus(id) {
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    const nextStatus = r.status === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
+                    return { ...r, status: nextStatus };
+                }
+                return r;
+            });
+            saveData();
+        }
+
+        function toggleMaintenance(id) {
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    return { ...r, status: r.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE' };
+                }
+                return r;
+            });
+            saveData();
+        }
+
+        function deleteRoom(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus ruang meeting ini?')) {
+                rooms = rooms.filter(r => r.id !== id);
+                saveData();
+            }
+        }
+
+        // Modal Controls
+        function openAddRoomModal() {
+            document.getElementById('modalTitle').innerText = 'Tambah Ruang Meeting';
+            document.getElementById('roomId').value = '';
+            document.getElementById('roomForm').reset();
+            document.getElementById('roomModal').style.display = 'flex';
+        }
+
+        function openEditRoomModal(id) {
+            const room = rooms.find(r => r.id === id);
+            if (!room) return;
+
+            document.getElementById('modalTitle').innerText = 'Edit Ruang Meeting';
+            document.getElementById('roomId').value = room.id;
+            document.getElementById('roomName').value = room.name;
+            document.getElementById('roomLocation').value = room.location;
+            document.getElementById('roomCapacity').value = room.capacity;
+            document.getElementById('roomFacilities').value = room.facilities;
+            document.getElementById('roomModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+        }
+
+        function saveRoom(e) {
+            e.preventDefault();
+            const id = document.getElementById('roomId').value;
+            const name = document.getElementById('roomName').value;
+            const location = document.getElementById('roomLocation').value;
+            const capacity = parseInt(document.getElementById('roomCapacity').value);
+            const facilities = document.getElementById('roomFacilities').value;
+
+            if (id) {
+                // Edit existing
+                rooms = rooms.map(r => r.id === id ? { ...r, name, location, capacity, facilities } : r);
+            } else {
+                // Add new
+                const newRoom = {
+                    id: Date.now().toString(),
+                    name,
+                    location,
+                    capacity,
+                    facilities,
+                    status: 'AVAILABLE'
+                };
+                rooms.push(newRoom);
+            }
+
+            saveData();
+            closeModal();
+        }
+
+        // Realtime Listener across tabs/devices
+        syncChannel.onmessage = (event) => {
+            if (event.data.type === 'DATA_UPDATED') {
+                rooms = JSON.parse(localStorage.getItem('meeting_rooms')) || defaultRooms;
+                renderAllViews();
+            }
+        };
+
+        // Initialize Render
+        renderAllViews();
+    </script>
+</body>
+</html>
