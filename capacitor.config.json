@@ -1,7 +1,7 @@
 {
   "appId": "com.company.meetingroom",
   "appName": "Meeting Room App",
-  "webDir": "out",
+  "webDir": ".",
   "server": {
     "androidScheme": "https"
   }
