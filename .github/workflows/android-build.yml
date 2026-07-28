@@ -35,8 +35,11 @@ jobs:
           echo '{"appId":"com.company.meetingroom","appName":"Meeting Room App","webDir":".","server":{"androidScheme":"https"}}' > capacitor.config.json
           npx cap add android
 
-      - name: Inject Permissions into AndroidManifest
+      - name: Prepare Assets Directory & Inject Permissions
         run: |
+          mkdir -p android/app/src/main/assets
+          echo "[]" > android/app/src/main/assets/capacitor.plugins.json
+          
           node -e '
           const fs = require("fs");
           const path = "android/app/src/main/AndroidManifest.xml";
@@ -48,6 +51,7 @@ jobs:
 
       - name: Sync Capacitor
         run: |
+          npx cap copy android
           npx cap sync android
 
       - name: Build Android APK
