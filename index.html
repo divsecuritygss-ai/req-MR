@@ -3,283 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub & Management</title>
+    <title>Meeting Hub - Vercel Hybrid App</title>
     <style>
         :root {
-            --bg-dark: #07090e;
-            --surface-card: rgba(18, 24, 38, 0.65);
-            --surface-card-hover: rgba(28, 36, 56, 0.75);
-            --border-glow: rgba(255, 255, 255, 0.08);
-            --accent-blue: #3b82f6;
-            --accent-blue-glow: rgba(59, 130, 246, 0.35);
-            --accent-emerald: #10b981;
-            --accent-emerald-glow: rgba(16, 185, 129, 0.35);
-            --accent-rose: #f43f5e;
-            --accent-rose-glow: rgba(244, 63, 94, 0.35);
+            --bg-main: #0a0d14;
+            --card-bg: rgba(16, 23, 38, 0.75);
+            --card-inner: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(255, 255, 255, 0.15);
+            --accent-blue: #2563eb;
+            --accent-blue-bright: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
             --accent-amber: #f59e0b;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12), transparent 45%),
-                radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.05), transparent 40%);
-            color: var(--text-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 1.25rem 1rem;
+            padding: 1rem;
         }
 
-        /* Floating Segmented Control */
-        .segmented-control {
-            display: flex;
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(20px);
-            padding: 5px;
-            border-radius: 16px;
-            border: 1px solid var(--border-glow);
-            margin-bottom: 1.5rem;
+        .container {
             width: 100%;
-            max-width: 520px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
         }
 
-        .segment-btn {
-            flex: 1;
-            padding: 10px 14px;
-            border: none;
-            border-radius: 12px;
-            background: transparent;
-            color: var(--text-sub);
+        /* Top Bar Status */
+        .top-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
             font-weight: 600;
-            font-size: 0.825rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .pulse-dot-green {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .badge-capsule {
+            background: rgba(37, 99, 235, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+
+        /* Nav Pills Switcher */
+        .nav-pills {
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            border-radius: 14px;
+            gap: 4px;
+        }
+
+        .nav-pill-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
 
-        .segment-btn.active {
+        .nav-pill-btn.active {
             background: var(--accent-blue);
-            color: #ffffff;
-            box-shadow: 0 4px 16px var(--accent-blue-glow);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
         }
 
-        /* Main Glass Card Container */
-        .app-container {
-            width: 100%;
-            max-width: 520px;
-            background: var(--surface-card);
-            backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glow);
-            border-radius: 24px;
-            padding: 1.75rem;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+        .btn-sync-force {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: fit-content;
         }
 
-        .header-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .header-sub {
-            font-size: 0.825rem;
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-glow);
-        }
-
-        /* Room Cards */
-        .room-card {
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid var(--border-glow);
-            border-radius: 18px;
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .room-card:hover {
-            background: var(--surface-card-hover);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .room-card-top {
+        /* Header Title Area */
+        .header-area {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.75rem;
         }
 
-        .room-name {
-            font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
+        .app-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .room-meta {
-            font-size: 0.825rem;
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-
-        .room-facilities {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.04);
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: var(--text-sub);
-            margin-top: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Status Badges with Pulsing Dot */
-        .status-badge {
-            display: inline-flex;
+        .title-row {
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 14px;
+        }
+
+        .main-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .vercel-tag {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+        }
+
+        .greeting-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-scan-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+            transition: transform 0.2s;
+        }
+
+        .btn-scan-primary:active { transform: scale(0.96); }
+
+        /* Stats Grid (2x2) */
+        .stats-grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-card-title {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-card-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        /* Room Item Card */
+        .room-item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .room-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .status-pill {
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .badge-available {
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--accent-emerald);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-
-        .badge-occupied {
-            background: rgba(244, 63, 94, 0.12);
-            color: var(--accent-rose);
-            border: 1px solid rgba(244, 63, 94, 0.25);
-        }
-
-        .badge-maintenance {
-            background: rgba(245, 158, 11, 0.12);
-            color: var(--accent-amber);
-            border: 1px solid rgba(245, 158, 11, 0.25);
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: currentColor;
-            box-shadow: 0 0 10px currentColor;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.85); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Sleek Micro Buttons */
-        .btn {
-            padding: 0.65rem 1.1rem;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            justify-content: center;
             gap: 6px;
         }
 
-        .btn:active { transform: scale(0.97); }
-
-        .btn-primary {
-            background: var(--accent-blue);
-            color: #ffffff;
-            box-shadow: 0 4px 14px var(--accent-blue-glow);
+        .status-pill.occupied {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .btn-primary:hover {
-            background: #2563eb;
+        .status-pill.available {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        .btn-emerald {
-            background: var(--accent-emerald);
-            color: #ffffff;
-            box-shadow: 0 4px 14px var(--accent-emerald-glow);
+        .status-pill.maintenance {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
-        .btn-rose {
-            background: rgba(244, 63, 94, 0.15);
-            color: var(--accent-rose);
-            border: 1px solid rgba(244, 63, 94, 0.3);
+        .room-title-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
         }
 
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-            border: 1px solid var(--border-glow);
+        .room-cap-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
         }
 
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Stats Header for Admin */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-glow);
+        .active-meeting-box {
+            background: var(--card-inner);
+            border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 0.85rem;
-            text-align: center;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .stat-label { font-size: 0.725rem; color: var(--text-sub); }
-        .stat-val { font-size: 1.3rem; font-weight: 800; margin-top: 2px; }
+        .meeting-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
 
-        /* Modal Overlays */
+        .meeting-subject {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .meeting-footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Modal Security PIN */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.82);
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
             z-index: 100;
             align-items: center;
@@ -287,192 +320,281 @@
             padding: 1rem;
         }
 
-        .modal-box {
-            background: #0f172a;
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 1.75rem;
+        .modal-pin-box {
+            background: #111827;
+            border: 1px solid var(--border-highlight);
+            border-radius: 24px;
+            padding: 2rem;
             width: 100%;
-            max-width: 440px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
         }
 
-        .form-group {
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label { font-size: 0.8rem; color: var(--text-sub); font-weight: 500; }
-        .form-input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-glow);
-            border-radius: 10px;
-            padding: 10px 14px;
-            color: #ffffff;
-            font-size: 0.9rem;
+        .pin-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.25rem;
+            text-align: center;
+            letter-spacing: 0.3em;
+            margin: 1.25rem 0;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        .form-input:focus { border-color: var(--accent-blue); }
+        .pin-input:focus { border-color: var(--accent-blue-bright); }
+
+        .btn-full {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-ghost { background: rgba(255, 255, 255, 0.08); color: white; margin-top: 8px; }
     </style>
 </head>
 <body>
 
-    <!-- Floating Navigation Tabs -->
-    <nav class="segmented-control">
-        <button class="segment-btn active" onclick="switchTab('karyawan', this)">📱 Karyawan</button>
-        <button class="segment-btn" onclick="switchTab('tablet', this)">🖥️ Tablet Display</button>
-        <button class="segment-btn" onclick="switchTab('admin', this)">⚙️ Admin Panel</button>
-    </nav>
-
-    <!-- Main Card App -->
-    <main class="app-container">
+    <div class="container">
         
-        <!-- 1. KARYAWAN VIEW -->
-        <section id="viewKaryawan">
-            <header class="section-header">
-                <div>
-                    <h1 class="header-title">Ruang Meeting</h1>
-                    <p class="header-sub">Status & Check-in Realtime Kantor</p>
-                </div>
-            </header>
-            <div id="karyawanList"></div>
-        </section>
+        <!-- Top Engine Status -->
+        <div class="top-status-bar">
+            <div class="status-indicator">
+                <span class="pulse-dot-green"></span> SYNC ENGINE ACTIVE
+            </div>
+            <div class="badge-capsule">Capacitor v6.0 Ready</div>
+        </div>
 
-        <!-- 2. TABLET DISPLAY KIOSK VIEW -->
-        <section id="viewTablet" style="display: none;">
-            <header class="section-header">
-                <div>
-                    <h1 class="header-title">Tablet Pintu Display</h1>
-                    <p class="header-sub">Mode Kiosk Layar Ruangan</p>
-                </div>
-                <select id="tabletRoomSelect" class="form-input" onchange="renderTabletDisplay()" style="width: auto; padding: 6px 10px;">
-                </select>
-            </header>
-            <div id="tabletDisplayArea" style="text-align: center; padding: 2rem 0;"></div>
-        </section>
+        <!-- View Navigation Pills -->
+        <div class="nav-pills">
+            <button class="nav-pill-btn active" onclick="switchTab('karyawan', this)">📱 Mobile HP Karyawan</button>
+            <button class="nav-pill-btn" onclick="switchTab('tablet', this)">🖥️ Tablet Display Pintu Room</button>
+            <button class="nav-pill-btn" onclick="requestAdminAccess(this)">⚙️ Admin Panel 🔒</button>
+        </div>
 
-        <!-- 3. ADMIN MANAGEMENT VIEW -->
-        <section id="viewAdmin" style="display: none;">
-            <header class="section-header">
-                <div>
-                    <h1 class="header-title">Kelola Ruangan</h1>
-                    <p class="header-sub">Dashboard Manajemen Ruangan</p>
-                </div>
-                <button class="btn btn-primary" onclick="openAddModal()">+ Ruang Baru</button>
-            </header>
+        <button class="btn-sync-force" onclick="forceSyncData()">⚡ Force Sync State</button>
 
-            <div class="stats-row">
-                <div class="stat-box">
-                    <div class="stat-label">Total Ruang</div>
-                    <div id="statTotal" class="stat-val">0</div>
+        <!-- 1. VIEW KARYAWAN -->
+        <div id="viewKaryawan">
+            <!-- Header -->
+            <div class="header-area" style="margin-bottom: 1.25rem;">
+                <div class="app-title-group">
+                    <div class="title-row">
+                        <h1 class="main-title">Meeting Hub</h1>
+                        <span class="vercel-tag">Vercel Web App</span>
+                    </div>
+                    <p class="greeting-sub">Selamat datang, Alex (Engineering Lead)</p>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-label">Tersedia</div>
-                    <div id="statAvailable" class="stat-val" style="color: var(--accent-emerald);">0</div>
+                <button class="btn-scan-primary" onclick="triggerScan()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2m4-8h10M7 13h10"></path></svg>
+                    Scan Check-In
+                </button>
+            </div>
+
+            <!-- Stats 2x2 Grid -->
+            <div class="stats-grid-2x2" style="margin-bottom: 1.25rem;">
+                <div class="stat-card-box">
+                    <span class="stat-card-title">Tersedia</span>
+                    <span id="statTersedia" class="stat-card-num" style="color: var(--accent-green);">0</span>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-label">Terpakai</div>
-                    <div id="statOccupied" class="stat-val" style="color: var(--accent-rose);">0</div>
+                <div class="stat-card-box">
+                    <span class="stat-card-title">Sedang Dipakai</span>
+                    <span id="statDipakai" class="stat-card-num" style="color: var(--accent-red);">0</span>
+                </div>
+                <div class="stat-card-box">
+                    <span class="stat-card-title">Perlu Check-In</span>
+                    <span id="statCheckIn" class="stat-card-num" style="color: var(--accent-amber);">1</span>
+                </div>
+                <div class="stat-card-box">
+                    <span class="stat-card-title">Total Ruangan</span>
+                    <span id="statTotal" class="stat-card-num">0</span>
                 </div>
             </div>
 
-            <div id="adminList"></div>
-        </section>
+            <!-- Room List Cards -->
+            <div id="roomListContainer" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+        </div>
 
-    </main>
+        <!-- 2. VIEW TABLET PINTU DISPLAY -->
+        <div id="viewTablet" style="display: none;">
+            <div class="room-item-card" style="text-align: center; padding: 2rem 1.5rem;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; display: block;">PILIH TAMPILAN RUANG PINTU:</label>
+                <select id="tabletRoomSelect" onchange="renderTabletDisplay()" style="padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; border-radius: 12px; width: 100%; font-size: 1rem; margin-bottom: 1.5rem;">
+                </select>
+                <div id="tabletDisplayArea"></div>
+            </div>
+        </div>
 
-    <!-- MODAL FORM (ADD/EDIT ROOM) -->
+        <!-- 3. VIEW ADMIN PANEL -->
+        <div id="viewAdmin" style="display: none;">
+            <div class="header-area" style="margin-bottom: 1.25rem;">
+                <div>
+                    <h1 class="main-title">Kelola Ruangan</h1>
+                    <p class="greeting-sub">Admin Panel Management</p>
+                </div>
+                <button class="btn-scan-primary" onclick="openAddRoomModal()">+ Tambah Ruang</button>
+            </div>
+            <div id="adminRoomListContainer" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+        </div>
+
+    </div>
+
+    <!-- PIN SECURITY MODAL -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-pin-box">
+            <h3 style="font-size: 1.25rem; font-weight: 700;">Akses Admin Panel</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Masukkan PIN Keamanan Default Kantor</p>
+            <input type="password" id="pinInput" class="pin-input" placeholder="••••" maxlength="4">
+            <button class="btn-full btn-primary" onclick="verifyPin()">Masuk Admin</button>
+            <button class="btn-full btn-ghost" onclick="closePinModal()">Batal</button>
+        </div>
+    </div>
+
+    <!-- MODAL ADD/EDIT ROOM -->
     <div id="roomModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3 id="modalTitle" class="header-title" style="margin-bottom: 1.25rem;">Tambah Ruang Meeting</h3>
+        <div class="modal-pin-box" style="text-align: left; max-width: 420px;">
+            <h3 id="modalTitle" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Tambah Ruang Meeting</h3>
             <form id="roomForm" onsubmit="saveRoomData(event)">
                 <input type="hidden" id="roomId">
-                <div class="form-group">
-                    <label>Nama Ruangan</label>
-                    <input type="text" id="roomName" class="form-input" placeholder="Contoh: Executive Boardroom" required>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama Ruangan</label>
+                    <input type="text" id="roomName" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; border-radius: 10px; margin-top: 4px;">
                 </div>
-                <div class="form-group">
-                    <label>Lokasi / Lantai</label>
-                    <input type="text" id="roomLocation" class="form-input" placeholder="Contoh: Lantai 4 - Wing West" required>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Lokasi (Lantai & Sayap)</label>
+                    <input type="text" id="roomLocation" required placeholder="LANTAI 3 • SAYAP BARAT" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; border-radius: 10px; margin-top: 4px;">
                 </div>
-                <div class="form-group">
-                    <label>Kapasitas (Orang)</label>
-                    <input type="number" id="roomCapacity" class="form-input" placeholder="12" required>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kapasitas (Orang)</label>
+                    <input type="number" id="roomCapacity" required placeholder="12" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; border-radius: 10px; margin-top: 4px;">
                 </div>
-                <div class="form-group">
-                    <label>Fasilitas Utama</label>
-                    <input type="text" id="roomFacilities" class="form-input" placeholder="TV 65 inch, Wireless Mic, Whiteboard">
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Detail Meeting Berlangsung (Opsional)</label>
+                    <input type="text" id="meetingSubject" placeholder="Sprint Review & Planning Q3" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; border-radius: 10px; margin-top: 4px;">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
-                    <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeModal()">Batal</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Simpan</button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-full btn-ghost" onclick="closeRoomModal()">Batal</button>
+                    <button type="submit" class="btn-full btn-primary">Simpan Data</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- REALTIME BROADCAST & ENGINE -->
+    <!-- Realtime Engine & Logic -->
     <script>
         const syncChannel = new BroadcastChannel('meeting_hub_channel');
-        
+        const DEFAULT_PIN = "84L1";
+        let isAdminAuthenticated = false;
+
         const defaultRooms = [
-            { id: '1', name: 'Innovation 01', location: 'Lantai 3', capacity: 10, status: 'AVAILABLE', facilities: 'TV 65", Whiteboard' },
-            { id: '2', name: 'Executive Room', location: 'Lantai 4', capacity: 20, status: 'OCCUPIED', facilities: 'Video Conf, Microphones' },
-            { id: '3', name: 'Brainstorm Pod', location: 'Lantai 2', capacity: 4, status: 'MAINTENANCE', facilities: 'Smart Display' }
+            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '10:00 - 11:30 AM' },
+            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
         ];
 
-        let rooms = JSON.parse(localStorage.getItem('meeting_rooms')) || defaultRooms;
+        let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
 
-        function persistData() {
-            localStorage.setItem('meeting_rooms', JSON.stringify(rooms));
-            syncChannel.postMessage({ type: 'DATA_SYNC' });
-            renderViews();
+        function persistAndSync() {
+            localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
+            syncChannel.postMessage({ type: 'SYNC_STATE' });
+            renderAllViews();
+        }
+
+        function forceSyncData() {
+            persistAndSync();
+            alert('Realtime Sync Engine berhasil disinkronisasi ke seluruh perangkat!');
         }
 
         function switchTab(tabName, btn) {
-            document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            document.querySelectorAll('.nav-pill-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
 
             document.getElementById('viewKaryawan').style.display = tabName === 'karyawan' ? 'block' : 'none';
             document.getElementById('viewTablet').style.display = tabName === 'tablet' ? 'block' : 'none';
             document.getElementById('viewAdmin').style.display = tabName === 'admin' ? 'block' : 'none';
 
-            renderViews();
+            renderAllViews();
         }
 
-        function renderViews() {
-            renderKaryawan();
+        /* PIN Security Handlers */
+        function requestAdminAccess(btn) {
+            if (isAdminAuthenticated) {
+                switchTab('admin', btn);
+            } else {
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinModal').style.display = 'flex';
+            }
+        }
+
+        function verifyPin() {
+            const inputPin = document.getElementById('pinInput').value;
+            if (inputPin === DEFAULT_PIN) {
+                isAdminAuthenticated = true;
+                closePinModal();
+                const adminBtn = document.querySelectorAll('.nav-pill-btn')[2];
+                switchTab('admin', adminBtn);
+            } else {
+                alert('PIN Salah! Masukkan PIN default "84L1".');
+            }
+        }
+
+        function closePinModal() {
+            document.getElementById('pinModal').style.display = 'none';
+        }
+
+        /* Render Logic */
+        function renderAllViews() {
+            renderKaryawanView();
             renderTabletSelect();
             renderTabletDisplay();
-            renderAdmin();
+            renderAdminView();
         }
 
-        function renderKaryawan() {
-            const list = document.getElementById('karyawanList');
-            list.innerHTML = rooms.map(room => `
-                <article class="room-card">
-                    <div class="room-card-top">
-                        <div>
-                            <h2 class="room-name">${room.name}</h2>
-                            <p class="room-meta">${room.location} • Kapasitas ${room.capacity} Orang</p>
-                        </div>
-                        <span class="status-badge badge-${room.status.toLowerCase()}">
-                            <span class="pulse-dot"></span> ${room.status}
+        function renderKaryawanView() {
+            // Update Stats
+            const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
+            const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
+
+            document.getElementById('statTersedia').innerText = tersedia;
+            document.getElementById('statDipakai').innerText = dipakai;
+            document.getElementById('statTotal').innerText = rooms.length;
+
+            const container = document.getElementById('roomListContainer');
+            container.innerHTML = rooms.map(room => `
+                <div class="room-item-card">
+                    <div class="room-card-header">
+                        <span class="location-badge">${room.location}</span>
+                        <span class="status-pill ${room.status.toLowerCase()}">
+                            • ${room.status === 'OCCUPIED' ? 'Dipakai' : room.status === 'AVAILABLE' ? 'Tersedia' : 'Maintenance'}
                         </span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                        <div class="room-facilities">💻 ${room.facilities}</div>
-                        ${room.status !== 'MAINTENANCE' ? `
-                            <button class="btn ${room.status === 'AVAILABLE' ? 'btn-primary' : 'btn-ghost'}" onclick="toggleStatus('${room.id}')">
-                                ${room.status === 'AVAILABLE' ? 'Scan Check-In' : 'Selesaikan'}
-                            </button>
-                        ` : ''}
+                    <div>
+                        <div class="room-title-text">${room.name}</div>
+                        <div class="room-cap-text">Kapasitas: ${room.capacity} orang</div>
                     </div>
-                </article>
+                    ${room.status === 'OCCUPIED' ? `
+                        <div class="active-meeting-box">
+                            <span class="meeting-label">Meeting Berlangsung:</span>
+                            <span class="meeting-subject">${room.activeMeeting || 'Diskusi Tim'}</span>
+                            <div class="meeting-footer-row">
+                                <span>👤 ${room.pic || 'Staf Kantor'}</span>
+                                <span>🕒 ${room.time || '10:00 - 11:30 AM'}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <button class="btn-full ${room.status === 'AVAILABLE' ? 'btn-primary' : 'btn-ghost'}" onclick="toggleRoomStatus('${room.id}')" style="border-radius: 14px;">
+                        ${room.status === 'AVAILABLE' ? 'Check-In Ruangan Ini' : 'Selesaikan Meeting'}
+                    </button>
+                </div>
             `).join('');
         }
 
@@ -486,118 +608,105 @@
             const room = rooms.find(r => r.id === selectedId);
             const area = document.getElementById('tabletDisplayArea');
 
-            if (!room) {
-                area.innerHTML = '<p style="color: var(--text-sub);">Belum ada data ruangan.</p>';
-                return;
-            }
+            if (!room) return;
 
             area.innerHTML = `
-                <h2 style="font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.25rem;">${room.name}</h2>
-                <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 2rem;">${room.location} — Max ${room.capacity} Orang</p>
-                
-                <div style="margin-bottom: 2.5rem;">
-                    <span class="status-badge badge-${room.status.toLowerCase()}" style="font-size: 1.25rem; padding: 12px 32px; border-radius: 30px;">
-                        <span class="pulse-dot" style="width: 12px; height: 12px;"></span> ${room.status}
-                    </span>
+                <span class="location-badge" style="display: inline-block; margin-bottom: 12px;">${room.location}</span>
+                <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 4px;">${room.name}</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Kapasitas Maksimal ${room.capacity} Orang</p>
+                <div class="status-pill ${room.status.toLowerCase()}" style="display: inline-flex; font-size: 1.25rem; padding: 8px 24px; margin-bottom: 1.5rem;">
+                    • ${room.status}
                 </div>
-
-                <button class="btn ${room.status === 'AVAILABLE' ? 'btn-emerald' : 'btn-rose'}" onclick="toggleStatus('${room.id}')" style="font-size: 1rem; padding: 14px 28px; width: 100%; max-width: 300px;">
-                    ${room.status === 'AVAILABLE' ? 'Tap QR Check-In Status' : 'Tap Akhiri Penggunaan'}
+                <button class="btn-full btn-primary" onclick="toggleRoomStatus('${room.id}')" style="padding: 14px; font-size: 1rem;">
+                    ${room.status === 'AVAILABLE' ? 'Tap QR Code Check-In' : 'Tap Akhiri Penggunaan'}
                 </button>
             `;
         }
 
-        function renderAdmin() {
-            document.getElementById('statTotal').innerText = rooms.length;
-            document.getElementById('statAvailable').innerText = rooms.filter(r => r.status === 'AVAILABLE').length;
-            document.getElementById('statOccupied').innerText = rooms.filter(r => r.status === 'OCCUPIED').length;
-
-            const list = document.getElementById('adminList');
-            list.innerHTML = rooms.map(room => `
-                <article class="room-card" style="padding: 1rem 1.25rem;">
+        function renderAdminView() {
+            const container = document.getElementById('adminRoomListContainer');
+            container.innerHTML = rooms.map(room => `
+                <div class="room-item-card" style="padding: 1rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <h3 class="room-name" style="font-size: 1rem;">${room.name}</h3>
-                            <p class="room-meta" style="font-size: 0.775rem;">${room.location} | Cap: ${room.capacity}</p>
+                            <div class="room-title-text" style="font-size: 1rem;">${room.name}</div>
+                            <div class="room-cap-text">${room.location}</div>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            <button class="btn btn-ghost" style="padding: 6px 10px; font-size: 0.75rem;" onclick="toggleMaintenance('${room.id}')">
-                                ${room.status === 'MAINTENANCE' ? 'Aktifkan' : 'Maintenance'}
-                            </button>
-                            <button class="btn btn-ghost" style="padding: 6px 10px; font-size: 0.75rem;" onclick="openEditModal('${room.id}')">Edit</button>
-                            <button class="btn btn-rose" style="padding: 6px 10px; font-size: 0.75rem;" onclick="deleteRoom('${room.id}')">Hapus</button>
+                            <button class="btn-ghost" style="padding: 6px 10px; font-size: 0.75rem; border-radius: 8px;" onclick="toggleMaintenance('${room.id}')">Maintenance</button>
+                            <button class="btn-ghost" style="padding: 6px 10px; font-size: 0.75rem; border-radius: 8px;" onclick="deleteRoom('${room.id}')">Hapus</button>
                         </div>
                     </div>
-                </article>
+                </div>
             `).join('');
         }
 
-        function toggleStatus(id) {
-            rooms = rooms.map(r => r.id === id ? { ...r, status: r.status === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE' } : r);
-            persistData();
+        function toggleRoomStatus(id) {
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    const next = r.status === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
+                    return { ...r, status: next };
+                }
+                return r;
+            });
+            persistAndSync();
         }
 
         function toggleMaintenance(id) {
             rooms = rooms.map(r => r.id === id ? { ...r, status: r.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE' } : r);
-            persistData();
+            persistAndSync();
         }
 
         function deleteRoom(id) {
-            if (confirm('Hapus ruang meeting ini?')) {
+            if (confirm('Hapus ruangan ini dari database kantor?')) {
                 rooms = rooms.filter(r => r.id !== id);
-                persistData();
+                persistAndSync();
             }
         }
 
-        function openAddModal() {
-            document.getElementById('modalTitle').innerText = 'Tambah Ruang Meeting';
-            document.getElementById('roomId').value = '';
+        function openAddRoomModal() {
             document.getElementById('roomForm').reset();
             document.getElementById('roomModal').style.display = 'flex';
         }
 
-        function openEditModal(id) {
-            const room = rooms.find(r => r.id === id);
-            if (!room) return;
-            document.getElementById('modalTitle').innerText = 'Edit Ruang Meeting';
-            document.getElementById('roomId').value = room.id;
-            document.getElementById('roomName').value = room.name;
-            document.getElementById('roomLocation').value = room.location;
-            document.getElementById('roomCapacity').value = room.capacity;
-            document.getElementById('roomFacilities').value = room.facilities;
-            document.getElementById('roomModal').style.display = 'flex';
-        }
-
-        function closeModal() {
+        function closeRoomModal() {
             document.getElementById('roomModal').style.display = 'none';
         }
 
         function saveRoomData(e) {
             e.preventDefault();
-            const id = document.getElementById('roomId').value;
             const name = document.getElementById('roomName').value;
             const location = document.getElementById('roomLocation').value;
             const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const facilities = document.getElementById('roomFacilities').value;
+            const activeMeeting = document.getElementById('meetingSubject').value;
 
-            if (id) {
-                rooms = rooms.map(r => r.id === id ? { ...r, name, location, capacity, facilities } : r);
-            } else {
-                rooms.push({ id: Date.now().toString(), name, location, capacity, facilities, status: 'AVAILABLE' });
-            }
+            rooms.push({
+                id: Date.now().toString(),
+                name,
+                location,
+                capacity,
+                status: 'AVAILABLE',
+                activeMeeting,
+                pic: 'Admin Kantor',
+                time: '10:00 - 11:00 AM'
+            });
 
-            persistData();
-            closeModal();
+            persistAndSync();
+            closeRoomModal();
         }
 
-        syncChannel.onmessage = (event) => {
-            if (event.data.type === 'DATA_SYNC') {
-                rooms = JSON.parse(localStorage.getItem('meeting_rooms')) || defaultRooms;
-                renderViews();
+        function triggerScan() {
+            alert('Kamera Scanner Aktif: Mengarahkan ke modul pemindaian QR Code...');
+        }
+
+        syncChannel.onmessage = (e) => {
+            if (e.data.type === 'SYNC_STATE') {
+                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
+                renderAllViews();
             }
         };
 
-        renderViews();
+        renderAllViews();
     </script>
 </body>
 </html>
