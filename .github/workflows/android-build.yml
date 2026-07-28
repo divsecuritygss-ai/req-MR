@@ -40,9 +40,25 @@ jobs:
           if [ ! -f out/index.html ]; then
             echo '<!DOCTYPE html><html><head><title>Meeting Room</title></head><body><h1>Meeting Room App</h1></body></html>' > out/index.html
           fi
-          if [ ! -d android ]; then
+
+          # Backup custom AndroidManifest jika ada
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            mkdir -p /tmp/manifest_backup
+            cp android/app/src/main/AndroidManifest.xml /tmp/manifest_backup/AndroidManifest.xml
+          fi
+
+          # Generasi ulang proyek Android lengkap jika gradlew belum tercipta
+          if [ ! -f android/gradlew ]; then
+            rm -rf android
             npx cap add android
           fi
+
+          # Kembalikan custom AndroidManifest
+          if [ -f /tmp/manifest_backup/AndroidManifest.xml ]; then
+            mkdir -p android/app/src/main
+            cp /tmp/manifest_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          fi
+
           npx cap sync android
 
       - name: Build Android APK
