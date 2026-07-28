@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Enterprise & Check-In System</title>
+    <title>Meeting Room Hub - Enterprise Check-In & Dynamic Analytics</title>
     <style>
         :root {
             --bg-main: #080b11;
@@ -123,7 +123,7 @@
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
         }
 
-        /* Stats Summary Grid */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -208,11 +208,13 @@
             color: var(--text-secondary);
         }
 
-        /* Department Rows */
+        /* Dynamic Department Progress Bar */
         .dept-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            min-height: 100px;
+            justify-content: center;
         }
 
         .dept-row {
@@ -439,7 +441,7 @@
             </div>
         </header>
 
-        <!-- Stats Grid -->
+        <!-- Stats Summary Grid -->
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="stat-title">Ruang Tersedia</span>
@@ -462,7 +464,7 @@
         <!-- ANALYTICS SECTION -->
         <section class="analytics-grid">
             
-            <!-- Peak Usage Hours -->
+            <!-- Peak Usage Hours Bar Chart -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
@@ -492,7 +494,7 @@
                 </div>
             </div>
 
-            <!-- Departemen Pengguna Ruangan -->
+            <!-- Departemen Pengguna Ruangan (100% Dinamis dari Data Ruangan Aktif) -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">🏢 Departemen Pengguna</span>
@@ -521,7 +523,7 @@
 
     </div>
 
-    <!-- MODAL FORM CHECK-IN (DEPARTEMEN, PESERTA & DURASI) -->
+    <!-- MODAL FORM CHECK-IN (INPUT DEPARTEMEN MANUAL, PESERTA & DURASI) -->
     <div id="checkInModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
@@ -531,14 +533,15 @@
                 <input type="hidden" id="checkInRoomId">
                 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai</label>
-                    <select id="checkInDept" class="form-select" required>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Product & Design">Product & Design</option>
-                        <option value="Marketing & Sales">Marketing & Sales</option>
-                        <option value="HR & Operations">HR & Operations</option>
-                        <option value="Finance & Executive">Finance & Executive</option>
-                    </select>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai (Ketik Manual)</label>
+                    <input type="text" id="checkInDept" class="form-input" list="deptSuggestions" required placeholder="Contoh: Engineering, HR, Finance, Legal...">
+                    <datalist id="deptSuggestions">
+                        <option value="Engineering"></option>
+                        <option value="Product & Design"></option>
+                        <option value="Marketing & Sales"></option>
+                        <option value="HR & Operations"></option>
+                        <option value="Finance & Executive"></option>
+                    </datalist>
                 </div>
 
                 <div style="margin-bottom: 12px;">
@@ -605,14 +608,8 @@
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai Utama</label>
-                    <select id="roomDepartment" class="form-select">
-                        <option value="Engineering">Engineering</option>
-                        <option value="Product & Design">Product & Design</option>
-                        <option value="Marketing & Sales">Marketing & Sales</option>
-                        <option value="HR & Operations">HR & Operations</option>
-                        <option value="Finance & Executive">Finance & Executive</option>
-                    </select>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai Utama (Ketik Manual)</label>
+                    <input type="text" id="roomDepartment" class="form-input" list="deptSuggestions" required placeholder="Contoh: Engineering, Product...">
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full btn-ghost" onclick="closeModal('roomModal')">Batal</button>
@@ -646,7 +643,7 @@
 
         function forceSyncState() {
             saveDataAndSync();
-            alert('Realtime Engine berhasil disinkronisasi.');
+            alert('Realtime Engine berhasil disinkronisasi ke seluruh perangkat!');
         }
 
         function setFilter(filter, btn) {
@@ -689,25 +686,28 @@
             document.getElementById('checkInRoomId').value = room.id;
             document.getElementById('checkInRoomTitle').innerText = `${room.name} (${room.location}) — Max Cap: ${room.capacity} Orang`;
             document.getElementById('checkInPeople').max = room.capacity;
+            document.getElementById('checkInDept').value = room.department || '';
             document.getElementById('checkInForm').reset();
+            if (room.department) document.getElementById('checkInDept').value = room.department;
+            
             document.getElementById('checkInModal').style.display = 'flex';
         }
 
         function processCheckIn(e) {
             e.preventDefault();
             const id = document.getElementById('checkInRoomId').value;
-            const dept = document.getElementById('checkInDept').value;
+            const dept = document.getElementById('checkInDept').value.trim();
             const people = parseInt(document.getElementById('checkInPeople').value);
             const duration = document.getElementById('checkInDuration').value;
-            const pic = document.getElementById('checkInPic').value;
-            const subject = document.getElementById('checkInSubject').value;
+            const pic = document.getElementById('checkInPic').value.trim();
+            const subject = document.getElementById('checkInSubject').value.trim();
 
             rooms = rooms.map(r => {
                 if (r.id === id) {
                     return {
                         ...r,
                         status: 'OCCUPIED',
-                        department: dept,
+                        department: dept || 'Umum',
                         peopleCount: people,
                         time: duration,
                         pic: pic,
@@ -738,7 +738,7 @@
             saveDataAndSync();
         }
 
-        /* Render Dashboard & Analytics */
+        /* Render Dashboard & Dynamic Department Analytics */
         function renderDashboard() {
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
@@ -749,6 +749,7 @@
             document.getElementById('statMaintenance').innerText = maintenance;
             document.getElementById('statTotal').innerText = rooms.length;
 
+            // Panggil Hitung Statistik Departemen
             renderDepartmentAnalytics();
 
             let filteredRooms = rooms;
@@ -809,41 +810,48 @@
             `).join('');
         }
 
-        /* Render Hitung Statistik Departemen Secara Realtime */
+        /* RENDER HITUNG STATISTIK DEPARTEMEN SECARA 100% DINAMIS DARI DATA RUANGAN AKTIF */
         function renderDepartmentAnalytics() {
-            const counts = {
-                'Engineering': 0,
-                'Product & Design': 0,
-                'Marketing & Sales': 0,
-                'HR & Operations': 0,
-                'Finance & Executive': 0
-            };
+            const container = document.getElementById('departmentStatsContainer');
+            
+            // Hitung frekuensi departemen HANYA dari ruangan yang tersisa/aktif
+            const deptMap = {};
+            let totalWeight = 0;
 
-            let totalActive = 0;
-            rooms.forEach(r => {
-                if (r.department && counts[r.department] !== undefined) {
-                    counts[r.department] += (r.status === 'OCCUPIED' ? 2 : 1);
-                    totalActive += (r.status === 'OCCUPIED' ? 2 : 1);
+            rooms.forEach(room => {
+                if (room.department && room.department.trim() !== '') {
+                    const deptName = room.department.trim();
+                    // Bobot lebih tinggi jika sedang terpakai/OCCUPIED
+                    const weight = room.status === 'OCCUPIED' ? 2 : 1;
+                    deptMap[deptName] = (deptMap[deptName] || 0) + weight;
+                    totalWeight += weight;
                 }
             });
 
-            const container = document.getElementById('departmentStatsContainer');
-            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'];
+            const deptKeys = Object.keys(deptMap);
+
+            if (deptKeys.length === 0) {
+                container.innerHTML = `<p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 1rem;">Belum ada data departemen aktif.</p>`;
+                return;
+            }
+
+            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4'];
             let index = 0;
 
-            container.innerHTML = Object.keys(counts).map(dept => {
-                const val = counts[dept];
-                const percent = totalActive > 0 ? Math.round((val / totalActive) * 100) : 0;
+            container.innerHTML = deptKeys.map(dept => {
+                const countVal = deptMap[dept];
+                const percentage = totalWeight > 0 ? Math.round((countVal / totalWeight) * 100) : 0;
                 const color = colors[index % colors.length];
                 index++;
+
                 return `
                     <div class="dept-row">
                         <div class="dept-info">
                             <span class="dept-name">${dept}</span>
-                            <span class="dept-count">${percent}% Penggunaan</span>
+                            <span class="dept-count">${percentage}% Penggunaan</span>
                         </div>
                         <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percent}%; background: ${color};"></div>
+                            <div class="progress-bar-fill" style="width: ${percentage}%; background: ${color};"></div>
                         </div>
                     </div>
                 `;
@@ -879,10 +887,10 @@
 
         function saveRoomData(e) {
             e.preventDefault();
-            const name = document.getElementById('roomName').value;
-            const location = document.getElementById('roomLocation').value;
+            const name = document.getElementById('roomName').value.trim();
+            const location = document.getElementById('roomLocation').value.trim();
             const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const department = document.getElementById('roomDepartment').value;
+            const department = document.getElementById('roomDepartment').value.trim();
 
             rooms.push({
                 id: Date.now().toString(),
@@ -890,7 +898,7 @@
                 location,
                 capacity,
                 peopleCount: 0,
-                department,
+                department: department || 'Umum',
                 status: 'AVAILABLE',
                 activeMeeting: '',
                 pic: '',
@@ -905,6 +913,7 @@
             alert('Modul Pemindaian QR Code Aktif.');
         }
 
+        // Listener Sinkronisasi Antar Tab / Window Browser
         syncChannel.onmessage = (e) => {
             if (e.data.type === 'DATA_SYNC') {
                 rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
@@ -912,6 +921,14 @@
             }
         };
 
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'meeting_hub_rooms') {
+                rooms = JSON.parse(e.newValue) || defaultRooms;
+                renderDashboard();
+            }
+        });
+
+        // Inisialisasi awal
         renderDashboard();
     </script>
 </body>
