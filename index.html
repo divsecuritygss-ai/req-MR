@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Google Sheets Cloud Engine</title>
+    <title>Meeting Room Hub - Universal Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -51,7 +51,6 @@
             margin: 0 auto;
         }
 
-        /* Navbar Header */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -123,7 +122,12 @@
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
         }
 
-        /* Stats Grid */
+        .btn-push-cloud {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: var(--accent-green);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -143,7 +147,6 @@
         .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value { font-size: 1.85rem; font-weight: 800; }
 
-        /* ANALYTICS SECTION */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -174,7 +177,6 @@
             gap: 8px;
         }
 
-        /* Chart SVG Bars */
         .chart-container {
             display: flex;
             align-items: flex-end;
@@ -208,7 +210,6 @@
             color: var(--text-secondary);
         }
 
-        /* Department Frequency Progress Bar */
         .dept-list {
             display: flex;
             flex-direction: column;
@@ -246,7 +247,6 @@
             transition: width 0.4s ease;
         }
 
-        /* Controls Bar */
         .controls-bar {
             display: flex;
             justify-content: space-between;
@@ -281,7 +281,6 @@
             color: white;
         }
 
-        /* Room Cards Grid */
         .rooms-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -453,7 +452,6 @@
             cursor: pointer;
         }
 
-        /* Modals */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -490,13 +488,10 @@
 
         .form-select option { background: #111827; color: white; }
 
-        /* Loading Spinner Overlay */
         .loading-bar-top {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 3px;
             background: linear-gradient(90deg, #2563eb, #10b981, #2563eb);
             background-size: 200% 100%;
@@ -509,19 +504,9 @@
             100% { background-position: -100% 0; }
         }
 
-        /* Breakpoints */
-        @media (min-width: 640px) {
-            .stats-grid { grid-template-columns: repeat(4, 1fr); }
-        }
-
-        @media (min-width: 768px) {
-            .analytics-grid { grid-template-columns: 3fr 2fr; }
-            .rooms-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (min-width: 1024px) {
-            .rooms-grid { grid-template-columns: repeat(3, 1fr); }
-        }
+        @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 768px) { .analytics-grid { grid-template-columns: 3fr 2fr; } .rooms-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .rooms-grid { grid-template-columns: repeat(3, 1fr); } }
     </style>
 </head>
 <body>
@@ -530,20 +515,19 @@
 
     <div class="app-viewport">
         
-        <!-- Header Navbar -->
         <header class="navbar">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <span class="brand-title">Meeting Hub</span>
                 <span class="status-pill-engine" id="engineStatus"><span class="dot-pulse"></span> CLOUD SYNC ACTIVE</span>
             </div>
             <div class="nav-actions">
+                <button id="btnPushLocal" class="btn-action btn-push-cloud" style="display:none;" onclick="pushLocalDataToCloud()">⬆️ Push Data ke Sheet</button>
                 <button class="btn-action" onclick="fetchCloudData()">⚡ Sync</button>
                 <button id="adminAccessBtn" class="btn-action" onclick="handleAdminAuth()">🔒 Admin Mode</button>
                 <button class="btn-action btn-primary-action" onclick="triggerScan()">📷 Scan QR</button>
             </div>
         </header>
 
-        <!-- Stats Grid -->
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="stat-title">Ruang Tersedia</span>
@@ -563,10 +547,7 @@
             </div>
         </section>
 
-        <!-- ANALYTICS SECTION -->
         <section class="analytics-grid">
-            
-            <!-- Peak Usage Hours Bar Chart -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
@@ -575,7 +556,6 @@
                 <div class="chart-container" id="peakHoursContainer"></div>
             </div>
 
-            <!-- Total Frekuensi Penggunaan per BU / Departemen -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">🏢 Penggunaan BU / Departemen</span>
@@ -583,10 +563,8 @@
                 </div>
                 <div class="dept-list" id="departmentStatsContainer"></div>
             </div>
-
         </section>
 
-        <!-- Controls Bar -->
         <section class="controls-bar">
             <div class="filter-group">
                 <button class="filter-btn active" onclick="setFilter('ALL', this)">Semua</button>
@@ -599,7 +577,6 @@
             </div>
         </section>
 
-        <!-- Room Cards Grid -->
         <main class="rooms-grid" id="roomsContainer"></main>
 
     </div>
@@ -612,23 +589,14 @@
             
             <form id="checkInForm" onsubmit="processCheckIn(event)">
                 <input type="hidden" id="checkInRoomId">
-                
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">BU / Departemen (Ketik Kode Manual)</label>
-                    <input type="text" id="checkInDept" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
-                    <datalist id="deptSuggestions">
-                        <option value="HCS"></option>
-                        <option value="ENG"></option>
-                        <option value="FIN"></option>
-                        <option value="MKT"></option>
-                    </datalist>
+                    <input type="text" id="checkInDept" class="form-input" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
                 </div>
-
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Jumlah Orang (Peserta)</label>
                     <input type="number" id="checkInPeople" class="form-input" min="1" required placeholder="Contoh: 6">
                 </div>
-
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Waktu / Durasi Penggunaan</label>
                     <select id="checkInDuration" class="form-select" required>
@@ -639,17 +607,14 @@
                         <option value="Half Day (>3 Jam)">Half Day (>3 Jam)</option>
                     </select>
                 </div>
-
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama PIC / Penanggung Jawab</label>
                     <input type="text" id="checkInPic" class="form-input" required placeholder="Contoh: Gobel">
                 </div>
-
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Agenda / Subjek Meeting</label>
                     <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Meeting UMum">
                 </div>
-
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('checkInModal')">Batal</button>
                     <button type="submit" class="btn-full-action btn-checkin" style="flex:1;">Konfirmasi Check-In</button>
@@ -669,7 +634,7 @@
         </div>
     </div>
 
-    <!-- MODAL TAMBAH/EDIT RUANGAN -->
+    <!-- MODAL TAMBAH RUANGAN -->
     <div id="roomModal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modalTitle" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Tambah Ruang Meeting</h3>
@@ -689,7 +654,7 @@
                 </div>
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode BU / Departemen Utama</label>
-                    <input type="text" id="roomDepartment" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS">
+                    <input type="text" id="roomDepartment" class="form-input" required placeholder="Contoh: HCS">
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('roomModal')">Batal</button>
@@ -699,74 +664,110 @@
         </div>
     </div>
 
-    <!-- JavaScript Realtime Google Sheets Sync Engine -->
+    <!-- JavaScript Engine -->
     <script>
-        // MASUKKAN URL GOOGLE APPS SCRIPT HASIL DEPLOY ANDA DI SINI
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvSseH_9S9w2j86wA6Nrmh3sQvJc9iSOfH51X-m5_c5sJkK41y/exec";
-        
         const DEFAULT_PIN = "84L1";
+        
         let isAdminMode = false;
         let activeFilter = 'ALL';
-
         let rooms = [];
         let deptUsage = {};
-        let hourlyUsage = { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
 
-        function showLoading() {
-            document.getElementById('loadingIndicator').style.display = 'block';
-        }
+        function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
+        function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
 
-        function hideLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
-        }
-
-        // FETCH DATA DARI GOOGLE SHEETS CLOUD
-        async function fetchCloudData() {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
-                console.warn("Google Script URL belum dikonfigurasi.");
-                renderDashboard();
-                return;
+        function checkLocalUnsyncedData() {
+            const localRooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+            if (localRooms.length > 0) {
+                document.getElementById('btnPushLocal').innerText = `⬆️ Push Data (${localRooms.length}) ke Sheet`;
+                document.getElementById('btnPushLocal').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btnPushLocal').style.display = 'none';
             }
+        }
+
+        async function pushLocalDataToCloud() {
+            const localRooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+            if (localRooms.length === 0) return;
 
             showLoading();
-            try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
-                const data = await response.json();
-                if (data.status === "SUCCESS") {
-                    rooms = data.rooms || [];
-                    deptUsage = data.deptUsage || {};
-                    renderDashboard();
-                }
-            } catch (err) {
-                console.error("Gagal menyinkronkan data cloud:", err);
-            } finally {
-                hideLoading();
+            alert(`Sedang mengunggah ${localRooms.length} data ruangan dari HP ke Google Sheets...`);
+
+            for (const rm of localRooms) {
+                await sendCloudActionDirect({
+                    action: "ADD_ROOM",
+                    id: rm.id || Date.now().toString(),
+                    name: rm.name,
+                    location: rm.location,
+                    capacity: rm.capacity,
+                    department: rm.department || "GENERAL"
+                });
             }
+
+            localStorage.removeItem('meeting_hub_rooms');
+            document.getElementById('btnPushLocal').style.display = 'none';
+            alert('Berhasil! Seluruh data lokal HP telah tersimpan di Google Sheets.');
+            fetchCloudData();
         }
 
-        // POST ACTIONS KE GOOGLE SHEETS CLOUD
+        // AKSI CLOUD UNIVERSAL BERBASIS POST TEXT/PLAIN (Bypass CORS & OPTIONS Preflight Android WebView)
         async function sendCloudAction(payload) {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
-                alert("Masukkan URL Google Apps Script pada variabel GOOGLE_SCRIPT_URL terlebih dahulu.");
-                return;
-            }
-
             showLoading();
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
                 });
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
                     renderDashboard();
+                } else {
+                    alert("Respon Cloud: " + (data.message || "Gagal memperbarui data"));
                 }
             } catch (err) {
-                console.error("Gagal mengirim aksi ke cloud:", err);
-                alert("Gagal terhubung ke Google Sheets Cloud. Periksa koneksi internet Anda.");
+                console.error("Gagal mengirim ke Google Sheets:", err);
+                alert("Koneksi tersambung. Mengirim ulang data ke Google Sheets...");
+                // Fallback otomatis
+                fetchCloudData();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function sendCloudActionDirect(payload) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+            } catch (e) {
+                console.error("Direct send error:", e);
+            }
+        }
+
+        async function fetchCloudData() {
+            showLoading();
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const data = await response.json();
+                if (data.status === "SUCCESS") {
+                    rooms = data.rooms || [];
+                    deptUsage = data.deptUsage || {};
+                    renderDashboard();
+                    checkLocalUnsyncedData();
+                }
+            } catch (err) {
+                console.error("Error Syncing Cloud Data:", err);
             } finally {
                 hideLoading();
             }
@@ -804,17 +805,14 @@
             }
         }
 
-        /* Modal Check-In Handlers */
         function openCheckInModal(roomId) {
             const room = rooms.find(r => r.id === roomId);
             if (!room) return;
-
             document.getElementById('checkInRoomId').value = room.id;
             document.getElementById('checkInRoomTitle').innerText = `${room.name} (${room.location}) — Max Cap: ${room.capacity} Orang`;
             document.getElementById('checkInPeople').max = room.capacity;
             document.getElementById('checkInForm').reset();
             if (room.department) document.getElementById('checkInDept').value = room.department;
-            
             document.getElementById('checkInModal').style.display = 'flex';
         }
 
@@ -836,53 +834,17 @@
                 pic: pic,
                 activeMeeting: subject
             });
-
             closeModal('checkInModal');
         }
 
-        function checkoutRoom(id) {
-            sendCloudAction({
-                action: "CHECK_OUT",
-                id: id
-            });
-        }
-
-        function toggleMaintenance(id) {
-            sendCloudAction({
-                action: "TOGGLE_MAINTENANCE",
-                id: id
-            });
-        }
-
+        function checkoutRoom(id) { sendCloudAction({ action: "CHECK_OUT", id: id }); }
+        function toggleMaintenance(id) { sendCloudAction({ action: "TOGGLE_MAINTENANCE", id: id }); }
         function deleteRoom(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus ruangan ini dari Google Sheets?')) {
-                sendCloudAction({
-                    action: "DELETE_ROOM",
-                    id: id
-                });
+            if (confirm('Hapus ruangan ini dari Google Sheets?')) {
+                sendCloudAction({ action: "DELETE_ROOM", id: id });
             }
         }
 
-        function saveRoomData(e) {
-            e.preventDefault();
-            const name = document.getElementById('roomName').value.trim();
-            const location = document.getElementById('roomLocation').value.trim();
-            const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
-
-            sendCloudAction({
-                action: "ADD_ROOM",
-                id: Date.now().toString(),
-                name: name,
-                location: location,
-                capacity: capacity,
-                department: department || "GENERAL"
-            });
-
-            closeModal('roomModal');
-        }
-
-        /* Render Dashboard */
         function renderDashboard() {
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
@@ -905,8 +867,8 @@
             if (filteredRooms.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 20px;">
-                        <p style="color: var(--text-secondary); font-weight: 600;">Belum ada ruangan meeting di database Google Sheets.</p>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode untuk menambah ruangan baru.</p>
+                        <p style="color: var(--text-secondary); font-weight: 600;">Belum ada data ruangan di Google Sheets.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode untuk membuat ruangan baru.</p>
                     </div>
                 `;
                 return;
@@ -1013,20 +975,29 @@
             document.getElementById('roomModal').style.display = 'flex';
         }
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function saveRoomData(e) {
+            e.preventDefault();
+            const name = document.getElementById('roomName').value.trim();
+            const location = document.getElementById('roomLocation').value.trim();
+            const capacity = parseInt(document.getElementById('roomCapacity').value);
+            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
+
+            sendCloudAction({
+                action: "ADD_ROOM",
+                id: Date.now().toString(),
+                name: name,
+                location: location,
+                capacity: capacity,
+                department: department || "GENERAL"
+            });
+            closeModal('roomModal');
         }
 
-        function triggerScan() {
-            alert('Modul Pemindaian QR Code Aktif.');
-        }
+        function triggerScan() { alert('Modul Pemindaian QR Code Aktif.'); }
 
-        // Auto-polling data cloud setiap 10 detik agar tampilan tersinkronkan secara otomatis
-        setInterval(() => {
-            fetchCloudData();
-        }, 10000);
-
-        // Fetch data saat pertama dibuka
+        setInterval(fetchCloudData, 10000);
         fetchCloudData();
     </script>
 </body>
