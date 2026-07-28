@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Universal Engine</title>
+    <title>Meeting Room Hub - Production Cloud Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -666,7 +666,8 @@
 
     <!-- JavaScript Engine -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvSseH_9S9w2j86wA6Nrmh3sQvJc9iSOfH51X-m5_c5sJkK41y/exec";
+        // PASTE URL BARU HASIL DEPLOYMENT SCRIPT ANDA DI BAWAH INI:
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPIzy237bUEykF5U8AGWIWyBmAUoDRMjDOTuGZ-lR4OUozHWNT8Ca5ayopvtVMkz0I/exec";
         const DEFAULT_PIN = "84L1";
         
         let isAdminMode = false;
@@ -711,16 +712,24 @@
             fetchCloudData();
         }
 
-        // AKSI CLOUD UNIVERSAL BERBASIS POST TEXT/PLAIN (Bypass CORS & OPTIONS Preflight Android WebView)
         async function sendCloudAction(payload) {
+            if (GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
+                alert("Harap masukkan URL Web App Google Script baru Anda di baris script GOOGLE_SCRIPT_URL.");
+                return;
+            }
+
             showLoading();
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
+                    body: JSON.stringify(payload)
                 });
+                
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
@@ -731,9 +740,7 @@
                 }
             } catch (err) {
                 console.error("Gagal mengirim ke Google Sheets:", err);
-                alert("Koneksi tersambung. Mengirim ulang data ke Google Sheets...");
-                // Fallback otomatis
-                fetchCloudData();
+                alert("Gagal terhubung ke Google Sheets Cloud. Periksa URL Apps Script Anda.");
             } finally {
                 hideLoading();
             }
@@ -744,8 +751,7 @@
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
+                    body: JSON.stringify(payload)
                 });
             } catch (e) {
                 console.error("Direct send error:", e);
@@ -753,12 +759,14 @@
         }
 
         async function fetchCloudData() {
+            if (GOOGLE_SCRIPT_URL.includes("PASTE_URL")) return;
+
             showLoading();
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
+                if (!response.ok) {
+                    throw new Error("HTTP Status " + response.status);
+                }
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
