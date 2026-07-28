@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Enterprise BU Analytics</title>
+    <title>Meeting Room Hub - Clean Analytics Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -288,7 +288,6 @@
             gap: 1.25rem;
         }
 
-        /* EXACT CARD UI MATCHING SCREENSHOT */
         .room-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -406,7 +405,6 @@
             margin-top: 6px;
         }
 
-        /* Buttons matching Screenshot */
         .btn-full-action {
             width: 100%;
             padding: 14px;
@@ -709,23 +707,9 @@
         let isAdminMode = false;
         let activeFilter = 'ALL';
 
-        // Default Room Data (Disesuaikan dengan Screenshot)
-        const defaultRooms = [
-            { id: '1', name: 'ESC-27', location: 'Lantai 27', capacity: 12, peopleCount: 6, department: 'HCS', status: 'OCCUPIED', activeMeeting: 'Meeting UMum', pic: 'Gobel', time: '1 Jam (60 Min)' },
-            { id: '2', name: 'Titanium Room A', location: 'Lantai 3', capacity: 10, peopleCount: 0, department: 'ENG', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '3', name: 'Executive Pod', location: 'Lantai 4', capacity: 20, peopleCount: 0, department: 'FIN', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' }
-        ];
-
-        // Default Usage Frequency Counter per BU
-        const defaultDeptUsage = {
-            'HCS': 12,
-            'ENG': 8,
-            'FIN': 5,
-            'MKT': 3
-        };
-
-        let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
-        let deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
+        // Clean Initial State: Tidak ada data bawaan kaku
+        let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+        let deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
 
         function saveDataAndSync() {
             localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
@@ -835,7 +819,7 @@
             saveDataAndSync();
         }
 
-        /* Render Dashboard & Exact UI Matching Screenshot */
+        /* Render Dashboard */
         function renderDashboard() {
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
@@ -855,7 +839,12 @@
 
             const container = document.getElementById('roomsContainer');
             if (filteredRooms.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Tidak ada ruangan dengan status ini.</div>`;
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 20px;">
+                        <p style="color: var(--text-secondary); font-weight: 600;">Belum ada ruangan meeting.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode (PIN: 84L1) untuk menambah ruangan baru.</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -911,22 +900,21 @@
             `).join('');
         }
 
-        /* Render Frekuensi Penggunaan per BU / Departemen */
+        /* Render Dynamic Analytics (Strictly Based on Real Check-Ins) */
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             
-            // Re-sync daftar BU aktif dengan data ruangan + riwayat penggunaan
-            const activeDepts = new Set(rooms.map(r => (r.department || '').trim().toUpperCase()).filter(Boolean));
-            
-            // Filter hanya BU yang masih memiliki ruangan atau tercatat di deptUsage
-            const deptKeys = Object.keys(deptUsage).filter(dept => activeDepts.has(dept) || deptUsage[dept] > 0);
+            const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
 
             if (deptKeys.length === 0) {
-                container.innerHTML = `<p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 1rem;">Belum ada data penggunaan BU.</p>`;
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
+                        <span>📋 Belum ada riwayat penggunaan ruangan</span>
+                    </div>
+                `;
                 return;
             }
 
-            // Cari nilai penggunaan tertinggi untuk perhitungan skala bar
             const maxUsage = Math.max(...deptKeys.map(k => deptUsage[k]), 1);
             const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'];
             let index = 0;
@@ -964,14 +952,6 @@
 
         function deleteRoom(id) {
             if (confirm('Apakah Anda yakin ingin menghapus ruangan ini?')) {
-                const targetRoom = rooms.find(r => r.id === id);
-                if (targetRoom && targetRoom.department) {
-                    // Bersihkan counter jika tidak ada lagi ruangan dengan BU tersebut
-                    const remainingOtherRooms = rooms.filter(r => r.id !== id && r.department === targetRoom.department);
-                    if (remainingOtherRooms.length === 0) {
-                        delete deptUsage[targetRoom.department];
-                    }
-                }
                 rooms = rooms.filter(r => r.id !== id);
                 saveDataAndSync();
             }
@@ -1006,10 +986,6 @@
                 time: ''
             });
 
-            if (department && !deptUsage[department]) {
-                deptUsage[department] = 0;
-            }
-
             saveDataAndSync();
             closeModal('roomModal');
         }
@@ -1020,16 +996,16 @@
 
         syncChannel.onmessage = (e) => {
             if (e.data.type === 'DATA_SYNC') {
-                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
-                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
+                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
                 renderDashboard();
             }
         };
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'meeting_hub_rooms' || e.key === 'meeting_hub_dept_usage') {
-                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
-                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
+                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
                 renderDashboard();
             }
         });
