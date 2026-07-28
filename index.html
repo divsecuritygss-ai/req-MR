@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Secured & Clean Analytics</title>
+    <title>Meeting Room Hub - Google Sheets Cloud Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -456,7 +456,7 @@
         /* Modals */
         .modal-overlay {
             display: none;
-            position fixed;
+            position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
@@ -490,6 +490,25 @@
 
         .form-select option { background: #111827; color: white; }
 
+        /* Loading Spinner Overlay */
+        .loading-bar-top {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #2563eb, #10b981, #2563eb);
+            background-size: 200% 100%;
+            animation: loadingMove 1.5s infinite linear;
+            z-index: 999;
+        }
+
+        @keyframes loadingMove {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
         /* Breakpoints */
         @media (min-width: 640px) {
             .stats-grid { grid-template-columns: repeat(4, 1fr); }
@@ -507,16 +526,18 @@
 </head>
 <body>
 
+    <div id="loadingIndicator" class="loading-bar-top"></div>
+
     <div class="app-viewport">
         
         <!-- Header Navbar -->
         <header class="navbar">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <span class="brand-title">Meeting Hub</span>
-                <span class="status-pill-engine"><span class="dot-pulse"></span> SYNC ACTIVE</span>
+                <span class="status-pill-engine" id="engineStatus"><span class="dot-pulse"></span> CLOUD SYNC ACTIVE</span>
             </div>
             <div class="nav-actions">
-                <button class="btn-action" onclick="forceSyncState()">⚡ Sync</button>
+                <button class="btn-action" onclick="fetchCloudData()">⚡ Sync</button>
                 <button id="adminAccessBtn" class="btn-action" onclick="handleAdminAuth()">🔒 Admin Mode</button>
                 <button class="btn-action btn-primary-action" onclick="triggerScan()">📷 Scan QR</button>
             </div>
@@ -583,7 +604,7 @@
 
     </div>
 
-    <!-- MODAL FORM CHECK-IN (INPUT BU / DEPARTEMEN MANUAL, PESERTA & DURASI) -->
+    <!-- MODAL FORM CHECK-IN -->
     <div id="checkInModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
@@ -597,7 +618,6 @@
                     <input type="text" id="checkInDept" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
                     <datalist id="deptSuggestions">
                         <option value="HCS"></option>
-                        <option value="HCS-OPS"></option>
                         <option value="ENG"></option>
                         <option value="FIN"></option>
                         <option value="MKT"></option>
@@ -668,7 +688,7 @@
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode BU / Departemen Utama (Ketik Manual)</label>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode BU / Departemen Utama</label>
                     <input type="text" id="roomDepartment" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS">
                 </div>
                 <div style="display: flex; gap: 8px;">
@@ -679,38 +699,77 @@
         </div>
     </div>
 
-    <!-- JavaScript Realtime & Analytics Engine -->
+    <!-- JavaScript Realtime Google Sheets Sync Engine -->
     <script>
-        const syncChannel = new BroadcastChannel('meeting_hub_channel');
+        // MASUKKAN URL GOOGLE APPS SCRIPT HASIL DEPLOY ANDA DI SINI
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYhVvhsDhu1OVVxK855P7ir_hAd4DBXZhKf4pkqo34qYaPsZ_lI8YJIQ36D8I-6Mq2/exec";
+        
         const DEFAULT_PIN = "84L1";
         let isAdminMode = false;
         let activeFilter = 'ALL';
 
-        // Auto PURGE data mock lama jika masih tersimpan di memori browser pengguna
-        if (localStorage.getItem('meeting_hub_dept_usage') && JSON.parse(localStorage.getItem('meeting_hub_dept_usage'))['HCS'] === 12) {
-            localStorage.removeItem('meeting_hub_rooms');
-            localStorage.removeItem('meeting_hub_dept_usage');
-            localStorage.removeItem('meeting_hub_hourly');
+        let rooms = [];
+        let deptUsage = {};
+        let hourlyUsage = { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
         }
 
-        // State Murni: Kosong saat pertama kali dinyalakan
-        let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
-        let deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
-        let hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {
-            '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0
-        };
-
-        function saveDataAndSync() {
-            localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
-            localStorage.setItem('meeting_hub_dept_usage', JSON.stringify(deptUsage));
-            localStorage.setItem('meeting_hub_hourly', JSON.stringify(hourlyUsage));
-            syncChannel.postMessage({ type: 'DATA_SYNC' });
-            renderDashboard();
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
         }
 
-        function forceSyncState() {
-            saveDataAndSync();
-            alert('Realtime Engine berhasil disinkronisasi!');
+        // FETCH DATA DARI GOOGLE SHEETS CLOUD
+        async function fetchCloudData() {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
+                console.warn("Google Script URL belum dikonfigurasi.");
+                renderDashboard();
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
+                const data = await response.json();
+                if (data.status === "SUCCESS") {
+                    rooms = data.rooms || [];
+                    deptUsage = data.deptUsage || {};
+                    renderDashboard();
+                }
+            } catch (err) {
+                console.error("Gagal menyinkronkan data cloud:", err);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // POST ACTIONS KE GOOGLE SHEETS CLOUD
+        async function sendCloudAction(payload) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
+                alert("Masukkan URL Google Apps Script pada variabel GOOGLE_SCRIPT_URL terlebih dahulu.");
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (data.status === "SUCCESS") {
+                    rooms = data.rooms || [];
+                    deptUsage = data.deptUsage || {};
+                    renderDashboard();
+                }
+            } catch (err) {
+                console.error("Gagal mengirim aksi ke cloud:", err);
+                alert("Gagal terhubung ke Google Sheets Cloud. Periksa koneksi internet Anda.");
+            } finally {
+                hideLoading();
+            }
         }
 
         function setFilter(filter, btn) {
@@ -768,54 +827,59 @@
             const pic = document.getElementById('checkInPic').value.trim();
             const subject = document.getElementById('checkInSubject').value.trim();
 
-            rooms = rooms.map(r => {
-                if (r.id === id) {
-                    return {
-                        ...r,
-                        status: 'OCCUPIED',
-                        department: dept || 'UMUM',
-                        peopleCount: people,
-                        time: duration,
-                        pic: pic,
-                        activeMeeting: subject
-                    };
-                }
-                return r;
+            sendCloudAction({
+                action: "CHECK_IN",
+                id: id,
+                department: dept || "UMUM",
+                peopleCount: people,
+                time: duration,
+                pic: pic,
+                activeMeeting: subject
             });
 
-            // Increment Frekuensi Penggunaan BU
-            if (dept) {
-                deptUsage[dept] = (deptUsage[dept] || 0) + 1;
-            }
-
-            // Record Hourly Usage
-            const currentHour = new Date().getHours();
-            let slot = '08:00';
-            if (currentHour >= 17) slot = '17:00';
-            else if (currentHour >= 15) slot = '15:00';
-            else if (currentHour >= 13) slot = '13:00';
-            else if (currentHour >= 10) slot = '10:00';
-            hourlyUsage[slot] = (hourlyUsage[slot] || 0) + 1;
-
-            saveDataAndSync();
             closeModal('checkInModal');
         }
 
         function checkoutRoom(id) {
-            rooms = rooms.map(r => {
-                if (r.id === id) {
-                    return {
-                        ...r,
-                        status: 'AVAILABLE',
-                        peopleCount: 0,
-                        activeMeeting: '',
-                        pic: '',
-                        time: ''
-                    };
-                }
-                return r;
+            sendCloudAction({
+                action: "CHECK_OUT",
+                id: id
             });
-            saveDataAndSync();
+        }
+
+        function toggleMaintenance(id) {
+            sendCloudAction({
+                action: "TOGGLE_MAINTENANCE",
+                id: id
+            });
+        }
+
+        function deleteRoom(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus ruangan ini dari Google Sheets?')) {
+                sendCloudAction({
+                    action: "DELETE_ROOM",
+                    id: id
+                });
+            }
+        }
+
+        function saveRoomData(e) {
+            e.preventDefault();
+            const name = document.getElementById('roomName').value.trim();
+            const location = document.getElementById('roomLocation').value.trim();
+            const capacity = parseInt(document.getElementById('roomCapacity').value);
+            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
+
+            sendCloudAction({
+                action: "ADD_ROOM",
+                id: Date.now().toString(),
+                name: name,
+                location: location,
+                capacity: capacity,
+                department: department || "GENERAL"
+            });
+
+            closeModal('roomModal');
         }
 
         /* Render Dashboard */
@@ -841,7 +905,7 @@
             if (filteredRooms.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 20px;">
-                        <p style="color: var(--text-secondary); font-weight: 600;">Belum ada ruangan meeting.</p>
+                        <p style="color: var(--text-secondary); font-weight: 600;">Belum ada ruangan meeting di database Google Sheets.</p>
                         <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode untuk menambah ruangan baru.</p>
                     </div>
                 `;
@@ -896,26 +960,17 @@
             `).join('');
         }
 
-        /* Render Grafik Jam Sibuk Dinamis */
         function renderPeakHoursAnalytics() {
             const container = document.getElementById('peakHoursContainer');
             const slots = ['08:00', '10:00', '13:00', '15:00', '17:00'];
-            const maxVal = Math.max(...slots.map(s => hourlyUsage[s] || 0), 1);
-            const hasData = slots.some(s => (hourlyUsage[s] || 0) > 0);
-
-            container.innerHTML = slots.map(s => {
-                const count = hourlyUsage[s] || 0;
-                const height = hasData ? Math.round((count / maxVal) * 95) : 0;
-                return `
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: ${height}%; ${count === maxVal && hasData ? 'background: linear-gradient(180deg, #f43f5e, var(--accent-red));' : ''}"></div>
-                        <span class="chart-label">${s}</span>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = slots.map(s => `
+                <div class="chart-bar-group">
+                    <div class="chart-bar" style="height: 0%;"></div>
+                    <span class="chart-label">${s}</span>
+                </div>
+            `).join('');
         }
 
-        /* Render Analytics Frekuensi BU Dinamis */
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
@@ -923,7 +978,7 @@
             if (deptKeys.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
-                        <span>📋 Belum ada riwayat penggunaan ruangan</span>
+                        <span>📋 Belum ada riwayat penggunaan di Google Sheets</span>
                     </div>
                 `;
                 return;
@@ -953,24 +1008,6 @@
             }).join('');
         }
 
-        function toggleMaintenance(id) {
-            rooms = rooms.map(r => {
-                if (r.id === id) {
-                    const nextStatus = r.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE';
-                    return { ...r, status: nextStatus };
-                }
-                return r;
-            });
-            saveDataAndSync();
-        }
-
-        function deleteRoom(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus ruangan ini?')) {
-                rooms = rooms.filter(r => r.id !== id);
-                saveDataAndSync();
-            }
-        }
-
         function openAddRoomModal() {
             document.getElementById('roomForm').reset();
             document.getElementById('roomModal').style.display = 'flex';
@@ -980,51 +1017,17 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        function saveRoomData(e) {
-            e.preventDefault();
-            const name = document.getElementById('roomName').value.trim();
-            const location = document.getElementById('roomLocation').value.trim();
-            const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
-
-            rooms.push({
-                id: Date.now().toString(),
-                name,
-                location,
-                capacity,
-                peopleCount: 0,
-                department: department || 'GENERAL',
-                status: 'AVAILABLE',
-                activeMeeting: '',
-                pic: '',
-                time: ''
-            });
-
-            saveDataAndSync();
-            closeModal('roomModal');
-        }
-
         function triggerScan() {
             alert('Modul Pemindaian QR Code Aktif.');
         }
 
-        syncChannel.onmessage = (e) => {
-            if (e.data.type === 'DATA_SYNC') {
-                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
-                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
-                hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {};
-                renderDashboard();
-            }
-        };
+        // Auto-polling data cloud setiap 10 detik agar tampilan tersinkronkan secara otomatis
+        setInterval(() => {
+            fetchCloudData();
+        }, 10000);
 
-        window.addEventListener('storage', (e) => {
-            rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
-            deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
-            hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {};
-            renderDashboard();
-        });
-
-        renderDashboard();
+        // Fetch data saat pertama dibuka
+        fetchCloudData();
     </script>
 </body>
 </html>
