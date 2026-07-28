@@ -27,45 +27,97 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Initialize & Install Dependencies
+      - name: Initialize Project & Capacitor
         run: |
+          # Hapus folder android lama jika ada agar proyek dibentuk ulang secara bersih
+          rm -rf android
+
+          # Inisialisasi package.json jika belum ada
           if [ ! -f package.json ]; then
             npm init -y
           fi
-          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Prepare Web Assets & Sync Capacitor
-        run: |
+          # Install dependensi Capacitor versi stabil
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+
+          # Buat konfigurasi Capacitor JSON secara otomatis
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.company.meetingroom",
+            "appName": "Meeting Room App",
+            "webDir": "out",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+
+          # Siapkan aset web dummy jika belum ada build web
           mkdir -p out
           if [ ! -f out/index.html ]; then
             echo '<!DOCTYPE html><html><head><title>Meeting Room</title></head><body><h1>Meeting Room App</h1></body></html>' > out/index.html
           fi
 
-          # Backup custom AndroidManifest jika ada
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            mkdir -p /tmp/manifest_backup
-            cp android/app/src/main/AndroidManifest.xml /tmp/manifest_backup/AndroidManifest.xml
-          fi
+          # Buat struktur Android native baru
+          npx cap add android
 
-          # Generasi ulang proyek Android lengkap jika gradlew belum tercipta
-          if [ ! -f android/gradlew ]; then
-            rm -rf android
-            npx cap add android
-          fi
+      - name: Inject Clean AndroidManifest with Permissions
+        run: |
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-          # Kembalikan custom AndroidManifest
-          if [ -f /tmp/manifest_backup/AndroidManifest.xml ]; then
-            mkdir -p android/app/src/main
-            cp /tmp/manifest_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
-          fi
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="Meeting Room"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:supportsRtl="true"
+                  android:theme="@style/AppTheme"
+                  android:hardwareAccelerated="true">
+
+                  <activity
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+                      android:name=".MainActivity"
+                      android:label="Meeting Room"
+                      android:theme="@style/AppTheme.NoActionBarLaunch"
+                      android:launchMode="singleTask"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/file_paths" />
+                  </provider>
+              </application>
+          </manifest>
+          EOF
+
+      - name: Sync Capacitor
+        run: |
           npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
