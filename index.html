@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Clean Analytics Engine</title>
+    <title>Meeting Room Hub - Secured & Clean Analytics</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -456,7 +456,7 @@
         /* Modals */
         .modal-overlay {
             display: none;
-            position: fixed;
+            position fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
@@ -551,28 +551,7 @@
                     <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary);">Hari Ini</span>
                 </div>
-                <div class="chart-container">
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: 35%;"></div>
-                        <span class="chart-label">08:00</span>
-                    </div>
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: 60%;"></div>
-                        <span class="chart-label">10:00</span>
-                    </div>
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: 95%; background: linear-gradient(180deg, #f43f5e, var(--accent-red));"></div>
-                        <span class="chart-label">13:00</span>
-                    </div>
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: 80%;"></div>
-                        <span class="chart-label">15:00</span>
-                    </div>
-                    <div class="chart-bar-group">
-                        <div class="chart-bar" style="height: 40%;"></div>
-                        <span class="chart-label">17:00</span>
-                    </div>
-                </div>
+                <div class="chart-container" id="peakHoursContainer"></div>
             </div>
 
             <!-- Total Frekuensi Penggunaan per BU / Departemen -->
@@ -707,20 +686,31 @@
         let isAdminMode = false;
         let activeFilter = 'ALL';
 
-        // Clean Initial State: Tidak ada data bawaan kaku
+        // Auto PURGE data mock lama jika masih tersimpan di memori browser pengguna
+        if (localStorage.getItem('meeting_hub_dept_usage') && JSON.parse(localStorage.getItem('meeting_hub_dept_usage'))['HCS'] === 12) {
+            localStorage.removeItem('meeting_hub_rooms');
+            localStorage.removeItem('meeting_hub_dept_usage');
+            localStorage.removeItem('meeting_hub_hourly');
+        }
+
+        // State Murni: Kosong saat pertama kali dinyalakan
         let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
         let deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
+        let hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {
+            '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0
+        };
 
         function saveDataAndSync() {
             localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
             localStorage.setItem('meeting_hub_dept_usage', JSON.stringify(deptUsage));
+            localStorage.setItem('meeting_hub_hourly', JSON.stringify(hourlyUsage));
             syncChannel.postMessage({ type: 'DATA_SYNC' });
             renderDashboard();
         }
 
         function forceSyncState() {
             saveDataAndSync();
-            alert('Realtime Engine berhasil disinkronisasi ke seluruh perangkat!');
+            alert('Realtime Engine berhasil disinkronisasi!');
         }
 
         function setFilter(filter, btn) {
@@ -751,7 +741,7 @@
                 document.getElementById('adminActionGroup').style.display = 'block';
                 renderDashboard();
             } else {
-                alert('PIN Salah! Gunakan PIN default "84L1".');
+                alert('PIN Salah! Silakan coba lagi.');
             }
         }
 
@@ -793,10 +783,19 @@
                 return r;
             });
 
-            // Increment Frekuensi Penggunaan BU / Departemen
+            // Increment Frekuensi Penggunaan BU
             if (dept) {
                 deptUsage[dept] = (deptUsage[dept] || 0) + 1;
             }
+
+            // Record Hourly Usage
+            const currentHour = new Date().getHours();
+            let slot = '08:00';
+            if (currentHour >= 17) slot = '17:00';
+            else if (currentHour >= 15) slot = '15:00';
+            else if (currentHour >= 13) slot = '13:00';
+            else if (currentHour >= 10) slot = '10:00';
+            hourlyUsage[slot] = (hourlyUsage[slot] || 0) + 1;
 
             saveDataAndSync();
             closeModal('checkInModal');
@@ -830,6 +829,7 @@
             document.getElementById('statMaintenance').innerText = maintenance;
             document.getElementById('statTotal').innerText = rooms.length;
 
+            renderPeakHoursAnalytics();
             renderDepartmentAnalytics();
 
             let filteredRooms = rooms;
@@ -842,7 +842,7 @@
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 20px;">
                         <p style="color: var(--text-secondary); font-weight: 600;">Belum ada ruangan meeting.</p>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode (PIN: 84L1) untuk menambah ruangan baru.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Aktifkan Admin Mode untuk menambah ruangan baru.</p>
                     </div>
                 `;
                 return;
@@ -850,7 +850,6 @@
 
             container.innerHTML = filteredRooms.map(room => `
                 <article class="room-card">
-                    <!-- Top Badge Row -->
                     <div class="room-card-header">
                         <span class="location-badge-pill">${room.location}</span>
                         <span class="${room.status === 'OCCUPIED' ? 'status-pill-occupied' : room.status === 'AVAILABLE' ? 'status-pill-available' : 'status-pill-maintenance'}">
@@ -858,7 +857,6 @@
                         </span>
                     </div>
 
-                    <!-- Room Title & Capacity Row with BU Badge -->
                     <div>
                         <h2 class="room-title-huge">${room.name}</h2>
                         <div class="capacity-row">
@@ -867,7 +865,6 @@
                         </div>
                     </div>
 
-                    <!-- Inner Meeting Active Box -->
                     ${room.status === 'OCCUPIED' ? `
                         <div class="active-meeting-box">
                             <span class="meeting-label-sub">Meeting Berlangsung:</span>
@@ -879,7 +876,6 @@
                         </div>
                     ` : ''}
 
-                    <!-- Bottom Action Buttons -->
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         ${room.status === 'AVAILABLE' ? `
                             <button class="btn-full-action btn-checkin" onclick="openCheckInModal('${room.id}')">Check-In Ruangan</button>
@@ -900,10 +896,28 @@
             `).join('');
         }
 
-        /* Render Dynamic Analytics (Strictly Based on Real Check-Ins) */
+        /* Render Grafik Jam Sibuk Dinamis */
+        function renderPeakHoursAnalytics() {
+            const container = document.getElementById('peakHoursContainer');
+            const slots = ['08:00', '10:00', '13:00', '15:00', '17:00'];
+            const maxVal = Math.max(...slots.map(s => hourlyUsage[s] || 0), 1);
+            const hasData = slots.some(s => (hourlyUsage[s] || 0) > 0);
+
+            container.innerHTML = slots.map(s => {
+                const count = hourlyUsage[s] || 0;
+                const height = hasData ? Math.round((count / maxVal) * 95) : 0;
+                return `
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: ${height}%; ${count === maxVal && hasData ? 'background: linear-gradient(180deg, #f43f5e, var(--accent-red));' : ''}"></div>
+                        <span class="chart-label">${s}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* Render Analytics Frekuensi BU Dinamis */
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
-            
             const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
 
             if (deptKeys.length === 0) {
@@ -998,16 +1012,16 @@
             if (e.data.type === 'DATA_SYNC') {
                 rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
                 deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
+                hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {};
                 renderDashboard();
             }
         };
 
         window.addEventListener('storage', (e) => {
-            if (e.key === 'meeting_hub_rooms' || e.key === 'meeting_hub_dept_usage') {
-                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
-                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
-                renderDashboard();
-            }
+            rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
+            deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || {};
+            hourlyUsage = JSON.parse(localStorage.getItem('meeting_hub_hourly')) || {};
+            renderDashboard();
         });
 
         renderDashboard();
