@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Enterprise Dashboard</title>
+    <title>Meeting Room Hub & Analytics</title>
     <style>
         :root {
             --bg-main: #080b11;
@@ -16,6 +16,7 @@
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
         }
@@ -41,17 +42,16 @@
             padding: 1rem;
         }
 
-        /* Container Layout Adaptif */
         .app-viewport {
             width: 100%;
-            max-width: 1280px; /* Lebar maksimal laptop/desktop */
+            max-width: 1280px;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
             margin: 0 auto;
         }
 
-        /* Navigation Header Bar */
+        /* Navbar Header */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -61,12 +61,6 @@
             border: 1px solid var(--border-color);
             padding: 0.85rem 1.25rem;
             border-radius: 18px;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
         }
 
         .brand-title {
@@ -129,7 +123,7 @@
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
         }
 
-        /* Stats Grid Dashboard */
+        /* Stats Summary Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -146,18 +140,116 @@
             gap: 6px;
         }
 
-        .stat-title {
-            font-size: 0.8rem;
+        .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+        .stat-value { font-size: 1.85rem; font-weight: 800; }
+
+        /* ANALYTICS SECTION (GRAFIK & DEPARTEMEN) */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .analytics-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .analytics-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Chart SVG Bars */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 8px;
+            height: 140px;
+            padding-top: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .chart-bar {
+            width: 100%;
+            max-width: 28px;
+            background: linear-gradient(180deg, var(--accent-blue-bright), var(--accent-blue));
+            border-radius: 6px 6px 2px 2px;
+            transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .chart-bar:hover {
+            filter: brightness(1.2);
+        }
+
+        .chart-label {
+            font-size: 0.7rem;
             color: var(--text-secondary);
-            font-weight: 500;
         }
 
-        .stat-value {
-            font-size: 1.85rem;
-            font-weight: 800;
+        /* Department Progress Rows */
+        .dept-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        /* Controls Bar (Filter & Add) */
+        .dept-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dept-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .dept-name { font-weight: 600; color: var(--text-primary); }
+        .dept-count { color: var(--text-secondary); }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        /* Controls Bar */
         .controls-bar {
             display: flex;
             justify-content: space-between;
@@ -192,7 +284,7 @@
             color: white;
         }
 
-        /* Main Room Cards Grid */
+        /* Room Cards Grid */
         .rooms-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -208,11 +300,6 @@
             flex-direction: column;
             justify-content: space-between;
             gap: 1rem;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-        .room-card:hover {
-            border-color: var(--border-highlight);
         }
 
         .room-card-header {
@@ -232,6 +319,16 @@
             letter-spacing: 0.04em;
         }
 
+        .dept-tag {
+            background: rgba(139, 92, 246, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -242,35 +339,12 @@
             gap: 6px;
         }
 
-        .status-badge.occupied {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
+        .status-badge.occupied { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-badge.available { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-badge.maintenance { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-        .status-badge.available {
-            background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-badge.maintenance {
-            background: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .room-title {
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: -0.01em;
-        }
-
-        .room-meta {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
+        .room-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em; }
+        .room-meta { font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px; }
 
         .active-meeting-panel {
             background: var(--card-inner);
@@ -279,7 +353,7 @@
             padding: 0.85rem 1rem;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
 
         .btn-full {
@@ -298,7 +372,7 @@
         .btn-warning { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
         .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
 
-        /* Modal Security PIN & Form */
+        /* Modals */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -317,11 +391,11 @@
             border-radius: 20px;
             padding: 1.75rem;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
         }
 
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             padding: 10px 12px;
             background: rgba(255, 255, 255, 0.05);
@@ -333,28 +407,18 @@
             margin-top: 4px;
         }
 
-        .form-input:focus { border-color: var(--accent-blue-bright); }
-
-        /* RESPONSIVE MEDIA QUERIES (HP -> TABLET -> LAPTOP) */
+        /* Breakpoint Adjustments */
         @media (min-width: 640px) {
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
         }
 
         @media (min-width: 768px) {
-            .rooms-grid {
-                grid-template-columns: repeat(2, 1fr); /* Tablet 2 Kolom Grid */
-            }
+            .analytics-grid { grid-template-columns: 3fr 2fr; }
+            .rooms-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (min-width: 1024px) {
-            .rooms-grid {
-                grid-template-columns: repeat(3, 1fr); /* Laptop / PC 3 Kolom Grid */
-            }
-            .app-viewport {
-                padding: 1rem 0;
-            }
+            .rooms-grid { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -362,13 +426,11 @@
 
     <div class="app-viewport">
         
-        <!-- Navbar Header Utama -->
+        <!-- Header Navbar -->
         <header class="navbar">
-            <div class="nav-brand">
+            <div style="display: flex; align-items: center; gap: 12px;">
                 <span class="brand-title">Meeting Hub</span>
-                <span class="status-pill-engine">
-                    <span class="dot-pulse"></span> SYNC ACTIVE
-                </span>
+                <span class="status-pill-engine"><span class="dot-pulse"></span> SYNC ACTIVE</span>
             </div>
             <div class="nav-actions">
                 <button class="btn-action" onclick="forceSyncState()">⚡ Sync</button>
@@ -377,7 +439,7 @@
             </div>
         </header>
 
-        <!-- Stats Grid Summary Dashboard -->
+        <!-- Stats Grid -->
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="stat-title">Ruang Tersedia</span>
@@ -397,7 +459,53 @@
             </div>
         </section>
 
-        <!-- Controls Bar (Filter & Admin Action) -->
+        <!-- ANALYTICS SECTION (GRAFIK JAM SIBUK & DEPARTEMEN PENGGUNA) -->
+        <section class="analytics-grid">
+            
+            <!-- Grafik Penggunaan Jam Sibuk -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Hari Ini</span>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: 35%;"></div>
+                        <span class="chart-label">08:00</span>
+                    </div>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: 60%;"></div>
+                        <span class="chart-label">10:00</span>
+                    </div>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: 95%; background: linear-gradient(180deg, #f43f5e, var(--accent-red));"></div>
+                        <span class="chart-label">13:00</span>
+                    </div>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: 80%;"></div>
+                        <span class="chart-label">15:00</span>
+                    </div>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: 40%;"></div>
+                        <span class="chart-label">17:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Departemen Pengguna Ruangan -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <span class="analytics-title">🏢 Departemen Pengguna</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Bulan Ini</span>
+                </div>
+                <div class="dept-list" id="departmentStatsContainer">
+                    <!-- Progress Rows Rendered Dynamically -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Controls Bar -->
         <section class="controls-bar">
             <div class="filter-group">
                 <button class="filter-btn active" onclick="setFilter('ALL', this)">Semua</button>
@@ -410,12 +518,12 @@
             </div>
         </section>
 
-        <!-- Dynamic Responsive Room Grid -->
+        <!-- Room Cards Grid -->
         <main class="rooms-grid" id="roomsContainer"></main>
 
     </div>
 
-    <!-- MODAL PIN SECURITY FOR ADMIN MODE -->
+    <!-- MODAL PIN SECURITY -->
     <div id="pinModal" class="modal-overlay">
         <div class="modal-box" style="text-align: center;">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Keamanan Admin</h3>
@@ -444,6 +552,16 @@
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Kapasitas (Orang)</label>
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai Utama</label>
+                    <select id="roomDepartment" class="form-select">
+                        <option value="Engineering">Engineering</option>
+                        <option value="Product & Design">Product & Design</option>
+                        <option value="Marketing & Sales">Marketing & Sales</option>
+                        <option value="HR & Operations">HR & Operations</option>
+                        <option value="Executive Board">Executive Board</option>
+                    </select>
+                </div>
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Subjek Meeting Berlangsung (Opsional)</label>
                     <input type="text" id="meetingSubject" class="form-input" placeholder="Sprint Review & Planning Q3">
@@ -456,7 +574,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Realtime Engine & Handlers -->
+    <!-- JavaScript Realtime & Analytics Engine -->
     <script>
         const syncChannel = new BroadcastChannel('meeting_hub_channel');
         const DEFAULT_PIN = "84L1";
@@ -464,10 +582,10 @@
         let activeFilter = 'ALL';
 
         const defaultRooms = [
-            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '10:00 - 11:30 AM' },
-            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
+            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, department: 'Engineering', status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '10:00 - 11:30 AM' },
+            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, department: 'Product & Design', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, department: 'Executive Board', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, department: 'Marketing & Sales', status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
         ];
 
         let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
@@ -483,7 +601,6 @@
             alert('Realtime Engine berhasil disinkronisasi.');
         }
 
-        /* Filter Control */
         function setFilter(filter, btn) {
             activeFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -491,7 +608,6 @@
             renderDashboard();
         }
 
-        /* Admin Authentication */
         function handleAdminAuth() {
             if (isAdminMode) {
                 isAdminMode = false;
@@ -517,9 +633,9 @@
             }
         }
 
-        /* Main Dashboard Render Logic */
+        /* Render Dashboard & Department Analytics */
         function renderDashboard() {
-            // Stats Calculation
+            // Stats Summary Calculation
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
             const maintenance = rooms.filter(r => r.status === 'MAINTENANCE').length;
@@ -528,6 +644,9 @@
             document.getElementById('statDipakai').innerText = dipakai;
             document.getElementById('statMaintenance').innerText = maintenance;
             document.getElementById('statTotal').innerText = rooms.length;
+
+            // Render Department Usage Breakdown
+            renderDepartmentAnalytics();
 
             // Filter Rooms
             let filteredRooms = rooms;
@@ -551,7 +670,10 @@
                             </span>
                         </div>
                         <h2 class="room-title">${room.name}</h2>
-                        <p class="room-meta">Kapasitas Maksimal: ${room.capacity} orang</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <p class="room-meta">Kapasitas: ${room.capacity} orang</p>
+                            <span class="dept-tag">${room.department || 'General'}</span>
+                        </div>
                     </div>
 
                     ${room.status === 'OCCUPIED' ? `
@@ -560,7 +682,7 @@
                             <span style="font-size: 0.9rem; font-weight: 700;">${room.activeMeeting || 'Diskusi Tim'}</span>
                             <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: var(--text-secondary); margin-top: 4px;">
                                 <span>👤 ${room.pic || 'Staf Kantor'}</span>
-                                <span>🕒 ${room.time || '10:00 - 11:30 AM'}</span>
+                                <span>🕒 ${room.time || '10:00 AM'}</span>
                             </div>
                         </div>
                     ` : ''}
@@ -585,7 +707,37 @@
             `).join('');
         }
 
-        /* Status Controls & Maintenance Fix */
+        /* Render Department Progress Bars */
+        function renderDepartmentAnalytics() {
+            const deptCounts = {
+                'Engineering': 45,
+                'Product & Design': 25,
+                'Marketing & Sales': 18,
+                'HR & Operations': 12
+            };
+
+            const container = document.getElementById('departmentStatsContainer');
+            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+            let index = 0;
+
+            container.innerHTML = Object.keys(deptCounts).map(dept => {
+                const percent = deptCounts[dept];
+                const color = colors[index % colors.length];
+                index++;
+                return `
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-name">${dept}</span>
+                            <span class="dept-count">${percent}% Penggunaan</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${percent}%; background: ${color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function toggleRoomStatus(id) {
             rooms = rooms.map(r => {
                 if (r.id === id) {
@@ -615,7 +767,6 @@
             }
         }
 
-        /* Modal Handlers */
         function openAddRoomModal() {
             document.getElementById('roomForm').reset();
             document.getElementById('roomModal').style.display = 'flex';
@@ -630,6 +781,7 @@
             const name = document.getElementById('roomName').value;
             const location = document.getElementById('roomLocation').value;
             const capacity = parseInt(document.getElementById('roomCapacity').value);
+            const department = document.getElementById('roomDepartment').value;
             const activeMeeting = document.getElementById('meetingSubject').value;
 
             rooms.push({
@@ -637,6 +789,7 @@
                 name,
                 location,
                 capacity,
+                department,
                 status: 'AVAILABLE',
                 activeMeeting,
                 pic: 'Admin Kantor',
@@ -658,7 +811,6 @@
             }
         };
 
-        // Render Awal
         renderDashboard();
     </script>
 </body>
