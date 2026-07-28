@@ -503,6 +503,19 @@
 
         let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
 
+        /* DETEKSI OTOMATIS UKURAN LAYAR (HP VS TABLET) */
+        function autoDetectDeviceView() {
+            const screenWidth = window.innerWidth;
+            const buttons = document.querySelectorAll('.nav-pill-btn');
+            
+            // Jika lebar layar >= 768px (Standard Tablet Display)
+            if (screenWidth >= 768) {
+                switchTab('tablet', buttons[1]);
+            } else {
+                switchTab('karyawan', buttons[0]);
+            }
+        }
+
         function persistAndSync() {
             localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
             syncChannel.postMessage({ type: 'SYNC_STATE' });
@@ -560,7 +573,6 @@
         }
 
         function renderKaryawanView() {
-            // Update Stats
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
 
@@ -591,9 +603,11 @@
                             </div>
                         </div>
                     ` : ''}
-                    <button class="btn-full ${room.status === 'AVAILABLE' ? 'btn-primary' : 'btn-ghost'}" onclick="toggleRoomStatus('${room.id}')" style="border-radius: 14px;">
-                        ${room.status === 'AVAILABLE' ? 'Check-In Ruangan Ini' : 'Selesaikan Meeting'}
-                    </button>
+                    ${room.status !== 'MAINTENANCE' ? `
+                        <button class="btn-full ${room.status === 'AVAILABLE' ? 'btn-primary' : 'btn-ghost'}" onclick="toggleRoomStatus('${room.id}')" style="border-radius: 14px;">
+                            ${room.status === 'AVAILABLE' ? 'Check-In Ruangan Ini' : 'Selesaikan Meeting'}
+                        </button>
+                    ` : '<button class="btn-full btn-ghost" disabled style="opacity:0.5;">Sedang Maintenance</button>'}
                 </div>
             `).join('');
         }
@@ -617,9 +631,11 @@
                 <div class="status-pill ${room.status.toLowerCase()}" style="display: inline-flex; font-size: 1.25rem; padding: 8px 24px; margin-bottom: 1.5rem;">
                     • ${room.status}
                 </div>
-                <button class="btn-full btn-primary" onclick="toggleRoomStatus('${room.id}')" style="padding: 14px; font-size: 1rem;">
-                    ${room.status === 'AVAILABLE' ? 'Tap QR Code Check-In' : 'Tap Akhiri Penggunaan'}
-                </button>
+                ${room.status !== 'MAINTENANCE' ? `
+                    <button class="btn-full btn-primary" onclick="toggleRoomStatus('${room.id}')" style="padding: 14px; font-size: 1rem;">
+                        ${room.status === 'AVAILABLE' ? 'Tap QR Code Check-In' : 'Tap Akhiri Penggunaan'}
+                    </button>
+                ` : '<button class="btn-full btn-ghost" disabled style="opacity:0.5;">Dalam Perbaikan</button>'}
             `;
         }
 
@@ -633,7 +649,9 @@
                             <div class="room-cap-text">${room.location}</div>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            <button class="btn-ghost" style="padding: 6px 10px; font-size: 0.75rem; border-radius: 8px;" onclick="toggleMaintenance('${room.id}')">Maintenance</button>
+                            <button class="btn-ghost" style="padding: 6px 10px; font-size: 0.75rem; border-radius: 8px;" onclick="toggleMaintenance('${room.id}')">
+                                ${room.status === 'MAINTENANCE' ? 'Aktifkan' : 'Set Maintenance'}
+                            </button>
                             <button class="btn-ghost" style="padding: 6px 10px; font-size: 0.75rem; border-radius: 8px;" onclick="deleteRoom('${room.id}')">Hapus</button>
                         </div>
                     </div>
@@ -652,8 +670,15 @@
             persistAndSync();
         }
 
+        /* FIX PERBAIKAN LOGIKA MAINTENANCE FUNCTION */
         function toggleMaintenance(id) {
-            rooms = rooms.map(r => r.id === id ? { ...r, status: r.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE' } : r);
+            rooms = rooms.map(r => {
+                if (r.id === id) {
+                    const nextStatus = r.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE';
+                    return { ...r, status: nextStatus };
+                }
+                return r;
+            });
             persistAndSync();
         }
 
@@ -706,7 +731,8 @@
             }
         };
 
-        renderAllViews();
+        // Inisialisasi Deteksi Layar Otomatis saat pertama dibuka
+        autoDetectDeviceView();
     </script>
 </body>
 </html>
