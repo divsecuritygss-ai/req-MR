@@ -27,31 +27,43 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Initialize Project & Capacitor
+      - name: Initialize Project & Prepare Web Assets
         run: |
           rm -rf android
           if [ ! -f package.json ]; then npm init -y; fi
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          echo '{"appId":"com.company.meetingroom","appName":"Meeting Room App","webDir":".","server":{"androidScheme":"https"}}' > capacitor.config.json
+
+          # Buat/Pastikan capacitor.config.json menggunakan webDir "out"
+          echo '{"appId":"com.company.meetingroom","appName":"Meeting Room App","webDir":"out","server":{"androidScheme":"https"}}' > capacitor.config.json
+
+          # Salin index.html dari root ke folder out untuk Capacitor
+          mkdir -p out
+          if [ -f index.html ]; then
+            cp index.html out/index.html
+          else
+            echo '<!DOCTYPE html><html><head><title>Meeting Room</title></head><body><h1>Meeting Room App</h1></body></html>' > out/index.html
+          fi
+
           npx cap add android
 
       - name: Prepare Assets Directory & Inject Permissions
         run: |
           mkdir -p android/app/src/main/assets
           echo "[]" > android/app/src/main/assets/capacitor.plugins.json
-          
+
           node -e '
           const fs = require("fs");
           const path = "android/app/src/main/AndroidManifest.xml";
-          let content = fs.readFileSync(path, "utf8");
-          const perms = `\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n`;
-          content = content.replace("<application", perms + "    <application");
-          fs.writeFileSync(path, content);
+          if (fs.existsSync(path)) {
+            let content = fs.readFileSync(path, "utf8");
+            const perms = `\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n`;
+            content = content.replace("<application", perms + "    <application");
+            fs.writeFileSync(path, content);
+          }
           '
 
       - name: Sync Capacitor
         run: |
-          npx cap copy android
           npx cap sync android
 
       - name: Build Android APK
