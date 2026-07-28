@@ -29,36 +29,27 @@ jobs:
 
       - name: Initialize Project & Capacitor
         run: |
-          # Hapus folder android lama jika ada agar proyek dibentuk ulang secara bersih
           rm -rf android
 
-          # Inisialisasi package.json jika belum ada
           if [ ! -f package.json ]; then
             npm init -y
           fi
 
-          # Install dependensi Capacitor versi stabil
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
 
-          # Buat konfigurasi Capacitor JSON secara otomatis
-          cat << 'EOF' > capacitor.config.json
-          {
-            "appId": "com.company.meetingroom",
-            "appName": "Meeting Room App",
-            "webDir": "out",
-            "server": {
-              "androidScheme": "https"
+          if [ ! -f capacitor.config.json ]; then
+            cat << 'EOF' > capacitor.config.json
+            {
+              "appId": "com.company.meetingroom",
+              "appName": "Meeting Room App",
+              "webDir": ".",
+              "server": {
+                "androidScheme": "https"
+              }
             }
-          }
-          EOF
-
-          # Siapkan aset web dummy jika belum ada build web
-          mkdir -p out
-          if [ ! -f out/index.html ]; then
-            echo '<!DOCTYPE html><html><head><title>Meeting Room</title></head><body><h1>Meeting Room App</h1></body></html>' > out/index.html
+            EOF
           fi
 
-          # Buat struktur Android native baru
           npx cap add android
 
       - name: Inject Clean AndroidManifest with Permissions
