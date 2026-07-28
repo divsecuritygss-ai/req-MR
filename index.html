@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Enterprise Check-In & Dynamic Analytics</title>
+    <title>Meeting Room Hub - Enterprise BU Analytics</title>
     <style>
         :root {
-            --bg-main: #080b11;
-            --card-bg: rgba(15, 22, 35, 0.75);
+            --bg-main: #090c13;
+            --card-bg: rgba(15, 20, 32, 0.85);
             --card-inner: rgba(255, 255, 255, 0.03);
             --border-color: rgba(255, 255, 255, 0.08);
-            --border-highlight: rgba(255, 255, 255, 0.18);
+            --border-highlight: rgba(255, 255, 255, 0.16);
             --accent-blue: #2563eb;
             --accent-blue-bright: #3b82f6;
             --accent-green: #10b981;
@@ -56,7 +56,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 22, 35, 0.8);
+            background: rgba(15, 22, 35, 0.85);
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-color);
             padding: 0.85rem 1.25rem;
@@ -208,11 +208,11 @@
             color: var(--text-secondary);
         }
 
-        /* Dynamic Department Progress Bar */
+        /* Department Frequency Progress Bar */
         .dept-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             min-height: 100px;
             justify-content: center;
         }
@@ -226,11 +226,11 @@
         .dept-info {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8rem;
+            font-size: 0.825rem;
         }
 
-        .dept-name { font-weight: 600; color: var(--text-primary); }
-        .dept-count { color: var(--text-secondary); }
+        .dept-name { font-weight: 700; color: var(--text-primary); }
+        .dept-count { color: var(--accent-blue-bright); font-weight: 700; }
 
         .progress-bar-bg {
             width: 100%;
@@ -288,15 +288,16 @@
             gap: 1.25rem;
         }
 
+        /* EXACT CARD UI MATCHING SCREENSHOT */
         .room-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 1.25rem;
+            border-radius: 24px;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            gap: 1rem;
+            gap: 1.25rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
         .room-card-header {
@@ -305,69 +306,154 @@
             align-items: center;
         }
 
-        .location-tag {
-            background: rgba(255, 255, 255, 0.05);
+        .location-badge-pill {
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
-
-        .dept-tag {
-            background: rgba(139, 92, 246, 0.15);
-            color: #c084fc;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
         }
 
-        .status-badge {
-            padding: 4px 12px;
+        .status-pill-occupied {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
-        .status-badge.occupied { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .status-badge.available { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-badge.maintenance { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-pill-available {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
 
-        .room-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em; }
-        .room-meta { font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px; }
+        .status-pill-maintenance {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
 
-        .active-meeting-panel {
+        .room-title-huge {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .capacity-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .capacity-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .bu-dept-badge {
+            background: rgba(139, 92, 246, 0.18);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .active-meeting-box {
             background: var(--card-inner);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 0.85rem 1rem;
+            border-radius: 16px;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .btn-full {
-            width: 100%;
-            padding: 11px;
-            border: none;
-            border-radius: 12px;
+        .meeting-label-sub {
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+        }
+
+        .meeting-subject-bold {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .meeting-footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        /* Buttons matching Screenshot */
+        .btn-full-action {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border: 1px solid var(--border-color);
         }
 
-        .btn-blue { background: var(--accent-blue); color: white; }
-        .btn-ghost { background: rgba(255, 255, 255, 0.08); color: white; }
-        .btn-warning { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
-        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+        .btn-full-action.btn-checkin {
+            background: var(--accent-blue);
+            border: none;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .admin-buttons-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-outline-amber {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: var(--accent-amber);
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-outline-red {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
 
         /* Modals */
         .modal-overlay {
@@ -385,7 +471,7 @@
         .modal-box {
             background: #111827;
             border: 1px solid var(--border-highlight);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 1.75rem;
             width: 100%;
             max-width: 440px;
@@ -394,20 +480,17 @@
 
         .form-input, .form-select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             font-size: 0.9rem;
             outline: none;
             margin-top: 4px;
         }
 
-        .form-select option {
-            background: #111827;
-            color: white;
-        }
+        .form-select option { background: #111827; color: white; }
 
         /* Breakpoints */
         @media (min-width: 640px) {
@@ -441,7 +524,7 @@
             </div>
         </header>
 
-        <!-- Stats Summary Grid -->
+        <!-- Stats Grid -->
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="stat-title">Ruang Tersedia</span>
@@ -494,11 +577,11 @@
                 </div>
             </div>
 
-            <!-- Departemen Pengguna Ruangan (100% Dinamis dari Data Ruangan Aktif) -->
+            <!-- Total Frekuensi Penggunaan per BU / Departemen -->
             <div class="analytics-card">
                 <div class="analytics-header">
-                    <span class="analytics-title">🏢 Departemen Pengguna</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Statistik Realtime</span>
+                    <span class="analytics-title">🏢 Penggunaan BU / Departemen</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Total Frekuensi</span>
                 </div>
                 <div class="dept-list" id="departmentStatsContainer"></div>
             </div>
@@ -523,7 +606,7 @@
 
     </div>
 
-    <!-- MODAL FORM CHECK-IN (INPUT DEPARTEMEN MANUAL, PESERTA & DURASI) -->
+    <!-- MODAL FORM CHECK-IN (INPUT BU / DEPARTEMEN MANUAL, PESERTA & DURASI) -->
     <div id="checkInModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
@@ -533,14 +616,14 @@
                 <input type="hidden" id="checkInRoomId">
                 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai (Ketik Manual)</label>
-                    <input type="text" id="checkInDept" class="form-input" list="deptSuggestions" required placeholder="Contoh: Engineering, HR, Finance, Legal...">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">BU / Departemen (Ketik Kode Manual)</label>
+                    <input type="text" id="checkInDept" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
                     <datalist id="deptSuggestions">
-                        <option value="Engineering"></option>
-                        <option value="Product & Design"></option>
-                        <option value="Marketing & Sales"></option>
-                        <option value="HR & Operations"></option>
-                        <option value="Finance & Executive"></option>
+                        <option value="HCS"></option>
+                        <option value="HCS-OPS"></option>
+                        <option value="ENG"></option>
+                        <option value="FIN"></option>
+                        <option value="MKT"></option>
                     </datalist>
                 </div>
 
@@ -553,26 +636,26 @@
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Waktu / Durasi Penggunaan</label>
                     <select id="checkInDuration" class="form-select" required>
                         <option value="30 Menit">30 Menit</option>
-                        <option value="1 Jam (60 Min)" selected>1 Jam (60 Menit)</option>
-                        <option value="1.5 Jam (90 Min)">1.5 Jam (90 Menit)</option>
-                        <option value="2 Jam (120 Min)">2 Jam (120 Menit)</option>
+                        <option value="1 Jam (60 Min)" selected>1 Jam (60 Min)</option>
+                        <option value="1.5 Jam (90 Min)">1.5 Jam (90 Min)</option>
+                        <option value="2 Jam (120 Min)">2 Jam (120 Min)</option>
                         <option value="Half Day (>3 Jam)">Half Day (>3 Jam)</option>
                     </select>
                 </div>
 
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama PIC / Penanggung Jawab</label>
-                    <input type="text" id="checkInPic" class="form-input" required placeholder="Contoh: Alex (Engineering Lead)">
+                    <input type="text" id="checkInPic" class="form-input" required placeholder="Contoh: Gobel">
                 </div>
 
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Agenda / Subjek Meeting</label>
-                    <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Sprint Planning Q3">
+                    <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Meeting UMum">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn-full btn-ghost" onclick="closeModal('checkInModal')">Batal</button>
-                    <button type="submit" class="btn-full btn-blue">Konfirmasi Check-In</button>
+                    <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('checkInModal')">Batal</button>
+                    <button type="submit" class="btn-full-action btn-checkin" style="flex:1;">Konfirmasi Check-In</button>
                 </div>
             </form>
         </div>
@@ -584,8 +667,8 @@
             <h3 style="font-size: 1.25rem; font-weight: 700;">Keamanan Admin</h3>
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Masukkan PIN Default Kantor untuk Kelola Ruangan</p>
             <input type="password" id="pinInput" class="form-input" placeholder="••••" maxlength="4" style="text-align: center; font-size: 1.25rem; letter-spacing: 0.3em; margin: 1.25rem 0;">
-            <button class="btn-full btn-blue" onclick="verifyAdminPin()">Masuk Admin</button>
-            <button class="btn-full btn-ghost" style="margin-top: 8px;" onclick="closeModal('pinModal')">Batal</button>
+            <button class="btn-full-action btn-checkin" onclick="verifyAdminPin()">Masuk Admin</button>
+            <button class="btn-full-action" style="margin-top: 8px;" onclick="closeModal('pinModal')">Batal</button>
         </div>
     </div>
 
@@ -597,23 +680,23 @@
                 <input type="hidden" id="roomId">
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama Ruangan</label>
-                    <input type="text" id="roomName" class="form-input" required placeholder="Contoh: Titanium Room A">
+                    <input type="text" id="roomName" class="form-input" required placeholder="Contoh: ESC-27">
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Lokasi (Lantai & Sayap)</label>
-                    <input type="text" id="roomLocation" class="form-input" required placeholder="LANTAI 3 • SAYAP BARAT">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Lokasi / Lantai</label>
+                    <input type="text" id="roomLocation" class="form-input" required placeholder="Contoh: Lantai 27">
                 </div>
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Kapasitas Maksimal (Orang)</label>
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen Pemakai Utama (Ketik Manual)</label>
-                    <input type="text" id="roomDepartment" class="form-input" list="deptSuggestions" required placeholder="Contoh: Engineering, Product...">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode BU / Departemen Utama (Ketik Manual)</label>
+                    <input type="text" id="roomDepartment" class="form-input" list="deptSuggestions" required placeholder="Contoh: HCS">
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn-full btn-ghost" onclick="closeModal('roomModal')">Batal</button>
-                    <button type="submit" class="btn-full btn-blue">Simpan Data</button>
+                    <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('roomModal')">Batal</button>
+                    <button type="submit" class="btn-full-action btn-checkin" style="flex:1;">Simpan Data</button>
                 </div>
             </form>
         </div>
@@ -626,17 +709,27 @@
         let isAdminMode = false;
         let activeFilter = 'ALL';
 
+        // Default Room Data (Disesuaikan dengan Screenshot)
         const defaultRooms = [
-            { id: '1', name: 'Titanium Room A', location: 'LANTAI 3 • SAYAP BARAT', capacity: 12, peopleCount: 8, department: 'Engineering', status: 'OCCUPIED', activeMeeting: 'Sprint Review & Planning Q3', pic: 'Rina Kurnia', time: '1.5 Jam (90 Min)' },
-            { id: '2', name: 'Innovation Pod 02', location: 'LANTAI 2 • SAYAP TIMUR', capacity: 6, peopleCount: 0, department: 'Product & Design', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '3', name: 'Executive Boardroom', location: 'LANTAI 4 • UTAMA', capacity: 20, peopleCount: 0, department: 'Finance & Executive', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
-            { id: '4', name: 'Creative Hub', location: 'LANTAI 1 • SELATAN', capacity: 8, peopleCount: 0, department: 'Marketing & Sales', status: 'MAINTENANCE', activeMeeting: '', pic: '', time: '' }
+            { id: '1', name: 'ESC-27', location: 'Lantai 27', capacity: 12, peopleCount: 6, department: 'HCS', status: 'OCCUPIED', activeMeeting: 'Meeting UMum', pic: 'Gobel', time: '1 Jam (60 Min)' },
+            { id: '2', name: 'Titanium Room A', location: 'Lantai 3', capacity: 10, peopleCount: 0, department: 'ENG', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' },
+            { id: '3', name: 'Executive Pod', location: 'Lantai 4', capacity: 20, peopleCount: 0, department: 'FIN', status: 'AVAILABLE', activeMeeting: '', pic: '', time: '' }
         ];
 
+        // Default Usage Frequency Counter per BU
+        const defaultDeptUsage = {
+            'HCS': 12,
+            'ENG': 8,
+            'FIN': 5,
+            'MKT': 3
+        };
+
         let rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
+        let deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
 
         function saveDataAndSync() {
             localStorage.setItem('meeting_hub_rooms', JSON.stringify(rooms));
+            localStorage.setItem('meeting_hub_dept_usage', JSON.stringify(deptUsage));
             syncChannel.postMessage({ type: 'DATA_SYNC' });
             renderDashboard();
         }
@@ -686,7 +779,6 @@
             document.getElementById('checkInRoomId').value = room.id;
             document.getElementById('checkInRoomTitle').innerText = `${room.name} (${room.location}) — Max Cap: ${room.capacity} Orang`;
             document.getElementById('checkInPeople').max = room.capacity;
-            document.getElementById('checkInDept').value = room.department || '';
             document.getElementById('checkInForm').reset();
             if (room.department) document.getElementById('checkInDept').value = room.department;
             
@@ -696,7 +788,7 @@
         function processCheckIn(e) {
             e.preventDefault();
             const id = document.getElementById('checkInRoomId').value;
-            const dept = document.getElementById('checkInDept').value.trim();
+            const dept = document.getElementById('checkInDept').value.trim().toUpperCase();
             const people = parseInt(document.getElementById('checkInPeople').value);
             const duration = document.getElementById('checkInDuration').value;
             const pic = document.getElementById('checkInPic').value.trim();
@@ -707,7 +799,7 @@
                     return {
                         ...r,
                         status: 'OCCUPIED',
-                        department: dept || 'Umum',
+                        department: dept || 'UMUM',
                         peopleCount: people,
                         time: duration,
                         pic: pic,
@@ -716,6 +808,11 @@
                 }
                 return r;
             });
+
+            // Increment Frekuensi Penggunaan BU / Departemen
+            if (dept) {
+                deptUsage[dept] = (deptUsage[dept] || 0) + 1;
+            }
 
             saveDataAndSync();
             closeModal('checkInModal');
@@ -738,7 +835,7 @@
             saveDataAndSync();
         }
 
-        /* Render Dashboard & Dynamic Department Analytics */
+        /* Render Dashboard & Exact UI Matching Screenshot */
         function renderDashboard() {
             const tersedia = rooms.filter(r => r.status === 'AVAILABLE').length;
             const dipakai = rooms.filter(r => r.status === 'OCCUPIED').length;
@@ -749,7 +846,6 @@
             document.getElementById('statMaintenance').innerText = maintenance;
             document.getElementById('statTotal').innerText = rooms.length;
 
-            // Panggil Hitung Statistik Departemen
             renderDepartmentAnalytics();
 
             let filteredRooms = rooms;
@@ -765,44 +861,49 @@
 
             container.innerHTML = filteredRooms.map(room => `
                 <article class="room-card">
+                    <!-- Top Badge Row -->
+                    <div class="room-card-header">
+                        <span class="location-badge-pill">${room.location}</span>
+                        <span class="${room.status === 'OCCUPIED' ? 'status-pill-occupied' : room.status === 'AVAILABLE' ? 'status-pill-available' : 'status-pill-maintenance'}">
+                            • ${room.status === 'OCCUPIED' ? 'Dipakai' : room.status === 'AVAILABLE' ? 'Tersedia' : 'Maintenance'}
+                        </span>
+                    </div>
+
+                    <!-- Room Title & Capacity Row with BU Badge -->
                     <div>
-                        <div class="room-card-header" style="margin-bottom: 0.75rem;">
-                            <span class="location-tag">${room.location}</span>
-                            <span class="status-badge ${room.status.toLowerCase()}">
-                                • ${room.status === 'OCCUPIED' ? 'Dipakai' : room.status === 'AVAILABLE' ? 'Tersedia' : 'Maintenance'}
-                            </span>
-                        </div>
-                        <h2 class="room-title">${room.name}</h2>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <p class="room-meta">Kapasitas: ${room.capacity} orang</p>
-                            <span class="dept-tag">${room.department || 'General'}</span>
+                        <h2 class="room-title-huge">${room.name}</h2>
+                        <div class="capacity-row">
+                            <span class="capacity-text">Kapasitas: ${room.capacity} orang</span>
+                            <span class="bu-dept-badge">${room.department || 'GENERAL'}</span>
                         </div>
                     </div>
 
+                    <!-- Inner Meeting Active Box -->
                     ${room.status === 'OCCUPIED' ? `
-                        <div class="active-meeting-panel">
-                            <span style="font-size: 0.725rem; color: var(--text-secondary);">Meeting Berlangsung:</span>
-                            <span style="font-size: 0.9rem; font-weight: 700;">${room.activeMeeting || 'Diskusi Tim'}</span>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: var(--text-secondary); margin-top: 6px;">
-                                <span>👤 ${room.pic || 'Staf Kantor'} (${room.peopleCount || 1} Orang)</span>
-                                <span>🕒 ${room.time || '1 Jam'}</span>
+                        <div class="active-meeting-box">
+                            <span class="meeting-label-sub">Meeting Berlangsung:</span>
+                            <span class="meeting-subject-bold">${room.activeMeeting || 'Meeting UMum'}</span>
+                            <div class="meeting-footer-info">
+                                <span>👤 ${room.pic || 'Staf'} (${room.peopleCount || 1} Orang)</span>
+                                <span>🕒 ${room.time || '1 Jam (60 Min)'}</span>
                             </div>
                         </div>
                     ` : ''}
 
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Bottom Action Buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
                         ${room.status === 'AVAILABLE' ? `
-                            <button class="btn-full btn-blue" onclick="openCheckInModal('${room.id}')">Check-In Ruangan</button>
+                            <button class="btn-full-action btn-checkin" onclick="openCheckInModal('${room.id}')">Check-In Ruangan</button>
                         ` : room.status === 'OCCUPIED' ? `
-                            <button class="btn-full btn-ghost" onclick="checkoutRoom('${room.id}')">Selesaikan Meeting</button>
-                        ` : '<button class="btn-full btn-ghost" disabled style="opacity: 0.5;">Sedang Maintenance</button>'}
+                            <button class="btn-full-action" onclick="checkoutRoom('${room.id}')">Selesaikan Meeting</button>
+                        ` : '<button class="btn-full-action" disabled style="opacity:0.5;">Sedang Maintenance</button>'}
 
                         ${isAdminMode ? `
-                            <div style="display: flex; gap: 6px; margin-top: 4px;">
-                                <button class="btn-full btn-warning" style="padding: 6px; font-size: 0.75rem;" onclick="toggleMaintenance('${room.id}')">
+                            <div class="admin-buttons-row">
+                                <button class="btn-outline-amber" onclick="toggleMaintenance('${room.id}')">
                                     ${room.status === 'MAINTENANCE' ? 'Aktifkan' : 'Set Maintenance'}
                                 </button>
-                                <button class="btn-full btn-danger" style="padding: 6px; font-size: 0.75rem;" onclick="deleteRoom('${room.id}')">Hapus</button>
+                                <button class="btn-outline-red" onclick="deleteRoom('${room.id}')">Hapus</button>
                             </div>
                         ` : ''}
                     </div>
@@ -810,48 +911,40 @@
             `).join('');
         }
 
-        /* RENDER HITUNG STATISTIK DEPARTEMEN SECARA 100% DINAMIS DARI DATA RUANGAN AKTIF */
+        /* Render Frekuensi Penggunaan per BU / Departemen */
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             
-            // Hitung frekuensi departemen HANYA dari ruangan yang tersisa/aktif
-            const deptMap = {};
-            let totalWeight = 0;
-
-            rooms.forEach(room => {
-                if (room.department && room.department.trim() !== '') {
-                    const deptName = room.department.trim();
-                    // Bobot lebih tinggi jika sedang terpakai/OCCUPIED
-                    const weight = room.status === 'OCCUPIED' ? 2 : 1;
-                    deptMap[deptName] = (deptMap[deptName] || 0) + weight;
-                    totalWeight += weight;
-                }
-            });
-
-            const deptKeys = Object.keys(deptMap);
+            // Re-sync daftar BU aktif dengan data ruangan + riwayat penggunaan
+            const activeDepts = new Set(rooms.map(r => (r.department || '').trim().toUpperCase()).filter(Boolean));
+            
+            // Filter hanya BU yang masih memiliki ruangan atau tercatat di deptUsage
+            const deptKeys = Object.keys(deptUsage).filter(dept => activeDepts.has(dept) || deptUsage[dept] > 0);
 
             if (deptKeys.length === 0) {
-                container.innerHTML = `<p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 1rem;">Belum ada data departemen aktif.</p>`;
+                container.innerHTML = `<p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 1rem;">Belum ada data penggunaan BU.</p>`;
                 return;
             }
 
-            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4'];
+            // Cari nilai penggunaan tertinggi untuk perhitungan skala bar
+            const maxUsage = Math.max(...deptKeys.map(k => deptUsage[k]), 1);
+            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'];
             let index = 0;
 
             container.innerHTML = deptKeys.map(dept => {
-                const countVal = deptMap[dept];
-                const percentage = totalWeight > 0 ? Math.round((countVal / totalWeight) * 100) : 0;
+                const count = deptUsage[dept] || 0;
+                const barWidth = Math.round((count / maxUsage) * 100);
                 const color = colors[index % colors.length];
                 index++;
 
                 return `
                     <div class="dept-row">
                         <div class="dept-info">
-                            <span class="dept-name">${dept}</span>
-                            <span class="dept-count">${percentage}% Penggunaan</span>
+                            <span class="dept-name">BU ${dept}</span>
+                            <span class="dept-count">${count}x Digunakan</span>
                         </div>
                         <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percentage}%; background: ${color};"></div>
+                            <div class="progress-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
                         </div>
                     </div>
                 `;
@@ -871,6 +964,14 @@
 
         function deleteRoom(id) {
             if (confirm('Apakah Anda yakin ingin menghapus ruangan ini?')) {
+                const targetRoom = rooms.find(r => r.id === id);
+                if (targetRoom && targetRoom.department) {
+                    // Bersihkan counter jika tidak ada lagi ruangan dengan BU tersebut
+                    const remainingOtherRooms = rooms.filter(r => r.id !== id && r.department === targetRoom.department);
+                    if (remainingOtherRooms.length === 0) {
+                        delete deptUsage[targetRoom.department];
+                    }
+                }
                 rooms = rooms.filter(r => r.id !== id);
                 saveDataAndSync();
             }
@@ -890,7 +991,7 @@
             const name = document.getElementById('roomName').value.trim();
             const location = document.getElementById('roomLocation').value.trim();
             const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const department = document.getElementById('roomDepartment').value.trim();
+            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
 
             rooms.push({
                 id: Date.now().toString(),
@@ -898,12 +999,16 @@
                 location,
                 capacity,
                 peopleCount: 0,
-                department: department || 'Umum',
+                department: department || 'GENERAL',
                 status: 'AVAILABLE',
                 activeMeeting: '',
                 pic: '',
                 time: ''
             });
+
+            if (department && !deptUsage[department]) {
+                deptUsage[department] = 0;
+            }
 
             saveDataAndSync();
             closeModal('roomModal');
@@ -913,22 +1018,22 @@
             alert('Modul Pemindaian QR Code Aktif.');
         }
 
-        // Listener Sinkronisasi Antar Tab / Window Browser
         syncChannel.onmessage = (e) => {
             if (e.data.type === 'DATA_SYNC') {
                 rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
+                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
                 renderDashboard();
             }
         };
 
         window.addEventListener('storage', (e) => {
-            if (e.key === 'meeting_hub_rooms') {
-                rooms = JSON.parse(e.newValue) || defaultRooms;
+            if (e.key === 'meeting_hub_rooms' || e.key === 'meeting_hub_dept_usage') {
+                rooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || defaultRooms;
+                deptUsage = JSON.parse(localStorage.getItem('meeting_hub_dept_usage')) || defaultDeptUsage;
                 renderDashboard();
             }
         });
 
-        // Inisialisasi awal
         renderDashboard();
     </script>
 </body>
