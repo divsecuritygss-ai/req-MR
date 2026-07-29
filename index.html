@@ -488,6 +488,19 @@
 
         .form-select option { background: #111827; color: white; }
 
+        .time-preview-badge {
+            background: rgba(37, 99, 235, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
         .loading-bar-top {
             display: none;
             position: fixed;
@@ -581,7 +594,7 @@
 
     </div>
 
-    <!-- MODAL FORM CHECK-IN -->
+    <!-- MODAL FORM CHECK-IN (TERMASUK PENENTUAN JAM MULAI & KALKULASI JAM SELESAI) -->
     <div id="checkInModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
@@ -589,32 +602,51 @@
             
             <form id="checkInForm" onsubmit="processCheckIn(event)">
                 <input type="hidden" id="checkInRoomId">
+                
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">BU / Departemen (Ketik Kode Manual)</label>
                     <input type="text" id="checkInDept" class="form-input" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
                 </div>
+
+                <!-- DUA KOLOM: JAM MULAI & DURASI -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-secondary);">Jam Mulai</label>
+                        <input type="time" id="checkInStartTime" class="form-input" required onchange="updateEndTimePreview()">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-secondary);">Durasi Meeting</label>
+                        <select id="checkInDuration" class="form-select" required onchange="updateEndTimePreview()">
+                            <option value="30">30 Menit</option>
+                            <option value="60" selected>1 Jam (60 Min)</option>
+                            <option value="90">1.5 Jam (90 Min)</option>
+                            <option value="120">2 Jam (120 Min)</option>
+                            <option value="180">Half Day (3 Jam)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- LIVE PREVIEW RENTANG WAKTU -->
+                <div class="time-preview-badge">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">🕒 Rentang Waktu:</span>
+                    <strong id="timeRangePreview" style="color: var(--accent-blue-bright); font-size: 0.9rem;">--:-- s/d --:--</strong>
+                </div>
+
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Jumlah Orang (Peserta)</label>
                     <input type="number" id="checkInPeople" class="form-input" min="1" required placeholder="Contoh: 6">
                 </div>
-                <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Waktu / Durasi Penggunaan</label>
-                    <select id="checkInDuration" class="form-select" required>
-                        <option value="30 Menit">30 Menit</option>
-                        <option value="1 Jam (60 Min)" selected>1 Jam (60 Min)</option>
-                        <option value="1.5 Jam (90 Min)">1.5 Jam (90 Min)</option>
-                        <option value="2 Jam (120 Min)">2 Jam (120 Min)</option>
-                        <option value="Half Day (>3 Jam)">Half Day (>3 Jam)</option>
-                    </select>
-                </div>
+
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Nama PIC / Penanggung Jawab</label>
                     <input type="text" id="checkInPic" class="form-input" required placeholder="Contoh: Gobel">
                 </div>
+
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Agenda / Subjek Meeting</label>
                     <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Meeting UMum">
                 </div>
+
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('checkInModal')">Batal</button>
                     <button type="submit" class="btn-full-action btn-checkin" style="flex:1;">Konfirmasi Check-In</button>
@@ -666,8 +698,7 @@
 
     <!-- JavaScript Engine -->
     <script>
-        // MASUKKAN URL GOOGLE APPS SCRIPT BARU ANDA DI SINI
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSrS96mtEmVlbmoC3Gdancg4HBIHEyZOYcrRIqSGs3hHq-IoPQWpqDsp2rMBd5xjCz/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvSseH_9S9w2j86wA6Nrmh3sQvJc9iSOfH51X-m5_c5sJkK41y/exec";
         const DEFAULT_PIN = "84L1";
         
         let isAdminMode = false;
@@ -678,6 +709,25 @@
 
         function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
         function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
+
+        // MENGHITUNG DYNAMIC END TIME
+        function updateEndTimePreview() {
+            const startTimeInput = document.getElementById('checkInStartTime').value;
+            const durationMinutes = parseInt(document.getElementById('checkInDuration').value) || 60;
+            if (!startTimeInput) return;
+
+            const [hours, minutes] = startTimeInput.split(':').map(Number);
+            const startDate = new Date();
+            startDate.setHours(hours, minutes, 0, 0);
+
+            const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+            const endHours = String(endDate.getHours()).padStart(2, '0');
+            const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+            const endTimeStr = `${endHours}:${endMinutes}`;
+
+            const durationText = durationMinutes < 60 ? `${durationMinutes} Min` : `${durationMinutes / 60} Jam`;
+            document.getElementById('timeRangePreview').innerText = `${startTimeInput} - ${endTimeStr} (${durationText})`;
+        }
 
         function checkLocalUnsyncedData() {
             const localRooms = JSON.parse(localStorage.getItem('meeting_hub_rooms')) || [];
@@ -804,7 +854,16 @@
             document.getElementById('checkInRoomTitle').innerText = `${room.name} (${room.location}) — Max Cap: ${room.capacity} Orang`;
             document.getElementById('checkInPeople').max = room.capacity;
             document.getElementById('checkInForm').reset();
+
+            // Set default jam mulai ke jam sekarang (HH:mm)
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('checkInStartTime').value = `${hh}:${mm}`;
+
             if (room.department) document.getElementById('checkInDept').value = room.department;
+            
+            updateEndTimePreview();
             document.getElementById('checkInModal').style.display = 'flex';
         }
 
@@ -813,16 +872,16 @@
             const id = document.getElementById('checkInRoomId').value;
             const dept = document.getElementById('checkInDept').value.trim().toUpperCase();
             const people = parseInt(document.getElementById('checkInPeople').value);
-            const duration = document.getElementById('checkInDuration').value;
             const pic = document.getElementById('checkInPic').value.trim();
             const subject = document.getElementById('checkInSubject').value.trim();
+            const timeRangeText = document.getElementById('timeRangePreview').innerText;
 
             sendCloudAction({
                 action: "CHECK_IN",
                 id: id,
                 department: dept || "UMUM",
                 peopleCount: people,
-                time: duration,
+                time: timeRangeText,
                 pic: pic,
                 activeMeeting: subject
             });
@@ -889,7 +948,7 @@
                             <span class="meeting-subject-bold">${room.activeMeeting || 'Meeting UMum'}</span>
                             <div class="meeting-footer-info">
                                 <span>👤 ${room.pic || 'Staf'} (${room.peopleCount || 1} Orang)</span>
-                                <span>🕒 ${room.time || '1 Jam (60 Min)'}</span>
+                                <span>🕒 ${room.time || '1 Jam'}</span>
                             </div>
                         </div>
                     ` : ''}
@@ -914,7 +973,6 @@
             `).join('');
         }
 
-        // RENDER GRAFIK JAM SIBUK DINAMIS
         function renderPeakHoursAnalytics() {
             const container = document.getElementById('peakHoursContainer');
             const slots = ['08:00', '10:00', '13:00', '15:00', '17:00'];
