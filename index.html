@@ -666,14 +666,15 @@
 
     <!-- JavaScript Engine -->
     <script>
-        // PASTE URL BARU HASIL DEPLOYMENT SCRIPT ANDA DI BAWAH INI:
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPIzy237bUEykF5U8AGWIWyBmAUoDRMjDOTuGZ-lR4OUozHWNT8Ca5ayopvtVMkz0I/exec";
+        // MASUKKAN URL GOOGLE APPS SCRIPT BARU ANDA DI SINI
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSrS96mtEmVlbmoC3Gdancg4HBIHEyZOYcrRIqSGs3hHq-IoPQWpqDsp2rMBd5xjCz/exec";
         const DEFAULT_PIN = "84L1";
         
         let isAdminMode = false;
         let activeFilter = 'ALL';
         let rooms = [];
         let deptUsage = {};
+        let hourlyUsage = { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
 
         function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
         function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
@@ -696,7 +697,7 @@
             alert(`Sedang mengunggah ${localRooms.length} data ruangan dari HP ke Google Sheets...`);
 
             for (const rm of localRooms) {
-                await sendCloudActionDirect({
+                await sendCloudAction({
                     action: "ADD_ROOM",
                     id: rm.id || Date.now().toString(),
                     name: rm.name,
@@ -713,8 +714,8 @@
         }
 
         async function sendCloudAction(payload) {
-            if (GOOGLE_SCRIPT_URL.includes("PASTE_URL")) {
-                alert("Harap masukkan URL Web App Google Script baru Anda di baris script GOOGLE_SCRIPT_URL.");
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASANG_URL")) {
+                alert("Harap isi URL Google Script baru Anda di variabel GOOGLE_SCRIPT_URL.");
                 return;
             }
 
@@ -726,14 +727,11 @@
                     body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) {
-                    throw new Error("HTTP error " + response.status);
-                }
-
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
+                    hourlyUsage = data.hourlyUsage || { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
                     renderDashboard();
                 } else {
                     alert("Respon Cloud: " + (data.message || "Gagal memperbarui data"));
@@ -746,31 +744,17 @@
             }
         }
 
-        async function sendCloudActionDirect(payload) {
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (e) {
-                console.error("Direct send error:", e);
-            }
-        }
-
         async function fetchCloudData() {
-            if (GOOGLE_SCRIPT_URL.includes("PASTE_URL")) return;
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASANG_URL")) return;
 
             showLoading();
             try {
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
-                if (!response.ok) {
-                    throw new Error("HTTP Status " + response.status);
-                }
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
+                    hourlyUsage = data.hourlyUsage || { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
                     renderDashboard();
                     checkLocalUnsyncedData();
                 }
@@ -930,15 +914,24 @@
             `).join('');
         }
 
+        // RENDER GRAFIK JAM SIBUK DINAMIS
         function renderPeakHoursAnalytics() {
             const container = document.getElementById('peakHoursContainer');
             const slots = ['08:00', '10:00', '13:00', '15:00', '17:00'];
-            container.innerHTML = slots.map(s => `
-                <div class="chart-bar-group">
-                    <div class="chart-bar" style="height: 0%;"></div>
-                    <span class="chart-label">${s}</span>
-                </div>
-            `).join('');
+            const maxVal = Math.max(...slots.map(s => hourlyUsage[s] || 0), 1);
+            const hasData = slots.some(s => (hourlyUsage[s] || 0) > 0);
+
+            container.innerHTML = slots.map(s => {
+                const count = hourlyUsage[s] || 0;
+                const height = hasData && count > 0 ? Math.round((count / maxVal) * 90) : 0;
+                const isPeak = count === maxVal && count > 0;
+                return `
+                    <div class="chart-bar-group">
+                        <div class="chart-bar" style="height: ${height}%; ${isPeak ? 'background: linear-gradient(180deg, #f43f5e, var(--accent-red));' : ''}"></div>
+                        <span class="chart-label">${s}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderDepartmentAnalytics() {
