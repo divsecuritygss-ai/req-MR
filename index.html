@@ -594,7 +594,7 @@
 
     </div>
 
-    <!-- MODAL FORM CHECK-IN (TERMASUK PENENTUAN JAM MULAI & KALKULASI JAM SELESAI) -->
+    <!-- MODAL FORM CHECK-IN -->
     <div id="checkInModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size: 1.25rem; font-weight: 700;">Check-In Ruangan</h3>
@@ -608,7 +608,6 @@
                     <input type="text" id="checkInDept" class="form-input" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
                 </div>
 
-                <!-- DUA KOLOM: JAM MULAI & DURASI -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
                         <label style="font-size: 0.8rem; color: var(--text-secondary);">Jam Mulai</label>
@@ -626,7 +625,6 @@
                     </div>
                 </div>
 
-                <!-- LIVE PREVIEW RENTANG WAKTU -->
                 <div class="time-preview-badge">
                     <span style="font-size: 0.8rem; color: var(--text-secondary);">🕒 Rentang Waktu:</span>
                     <strong id="timeRangePreview" style="color: var(--accent-blue-bright); font-size: 0.9rem;">--:-- s/d --:--</strong>
@@ -710,7 +708,6 @@
         function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
         function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
 
-        // MENGHITUNG DYNAMIC END TIME
         function updateEndTimePreview() {
             const startTimeInput = document.getElementById('checkInStartTime').value;
             const durationMinutes = parseInt(document.getElementById('checkInDuration').value) || 60;
@@ -855,7 +852,6 @@
             document.getElementById('checkInPeople').max = room.capacity;
             document.getElementById('checkInForm').reset();
 
-            // Set default jam mulai ke jam sekarang (HH:mm)
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
@@ -874,6 +870,8 @@
             const people = parseInt(document.getElementById('checkInPeople').value);
             const pic = document.getElementById('checkInPic').value.trim();
             const subject = document.getElementById('checkInSubject').value.trim();
+            
+            const startTimeInput = document.getElementById('checkInStartTime').value;
             const timeRangeText = document.getElementById('timeRangePreview').innerText;
 
             sendCloudAction({
@@ -881,7 +879,8 @@
                 id: id,
                 department: dept || "UMUM",
                 peopleCount: people,
-                time: timeRangeText,
+                startTime: startTimeInput, // Kirim Jam Mulai eksplisit ke Apps Script
+                time: timeRangeText,      // Kirim rentang waktu lengkap untuk tampilan kartu
                 pic: pic,
                 activeMeeting: subject
             });
