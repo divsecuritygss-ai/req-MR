@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meeting Room Hub - Production Cloud Engine</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Meeting Room Hub - Professional Cloud Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -230,7 +233,7 @@
             font-size: 0.825rem;
         }
 
-        .dept-name { font-weight: 700; color: var(--text-primary); }
+        .dept-name { font-weight: 700; color: var(--text-primary); letter-spacing: 0.02em; }
         .dept-count { color: var(--accent-blue-bright); font-weight: 700; }
 
         .progress-bar-bg {
@@ -571,7 +574,7 @@
 
             <div class="analytics-card">
                 <div class="analytics-header">
-                    <span class="analytics-title">🏢 Penggunaan BU / Departemen</span>
+                    <span class="analytics-title">🏢 Penggunaan Departemen / Unit</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary);">Total Frekuensi</span>
                 </div>
                 <div class="dept-list" id="departmentStatsContainer"></div>
@@ -604,8 +607,8 @@
                 <input type="hidden" id="checkInRoomId">
                 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">BU / Departemen (Ketik Kode Manual)</label>
-                    <input type="text" id="checkInDept" class="form-input" required placeholder="Contoh: HCS, ENG, FIN, MKT...">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Departemen / Unit Kerja</label>
+                    <input type="text" id="checkInDept" class="form-input" required placeholder="Contoh: SECURITY, SHE, HCS, MKT...">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
@@ -642,7 +645,7 @@
 
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 0.8rem; color: var(--text-secondary);">Agenda / Subjek Meeting</label>
-                    <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Meeting UMum">
+                    <input type="text" id="checkInSubject" class="form-input" required placeholder="Contoh: Meeting Umum">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -683,8 +686,8 @@
                     <input type="number" id="roomCapacity" class="form-input" required placeholder="12">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode BU / Departemen Utama</label>
-                    <input type="text" id="roomDepartment" class="form-input" required placeholder="Contoh: HCS">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Kode Departemen / Unit Utama</label>
+                    <input type="text" id="roomDepartment" class="form-input" required placeholder="Contoh: SECURITY">
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn-full-action" style="flex:1;" onclick="closeModal('roomModal')">Batal</button>
@@ -696,7 +699,7 @@
 
     <!-- JavaScript Engine -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSrS96mtEmVlbmoC3Gdancg4HBIHEyZOYcrRIqSGs3hHq-IoPQWpqDsp2rMBd5xjCz/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvSseH_9S9w2j86wA6Nrmh3sQvJc9iSOfH51X-m5_c5sJkK41y/exec";
         const DEFAULT_PIN = "84L1";
         
         let isAdminMode = false;
@@ -796,7 +799,8 @@
 
             showLoading();
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ`);
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ&_t=${cacheBuster}`);
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
@@ -879,8 +883,8 @@
                 id: id,
                 department: dept || "UMUM",
                 peopleCount: people,
-                startTime: startTimeInput, // Kirim Jam Mulai eksplisit ke Apps Script
-                time: timeRangeText,      // Kirim rentang waktu lengkap untuk tampilan kartu
+                startTime: startTimeInput,
+                time: timeRangeText,
                 pic: pic,
                 activeMeeting: subject
             });
@@ -944,7 +948,7 @@
                     ${room.status === 'OCCUPIED' ? `
                         <div class="active-meeting-box">
                             <span class="meeting-label-sub">Meeting Berlangsung:</span>
-                            <span class="meeting-subject-bold">${room.activeMeeting || 'Meeting UMum'}</span>
+                            <span class="meeting-subject-bold">${room.activeMeeting || 'Meeting Umum'}</span>
                             <div class="meeting-footer-info">
                                 <span>👤 ${room.pic || 'Staf'} (${room.peopleCount || 1} Orang)</span>
                                 <span>🕒 ${room.time || '1 Jam'}</span>
@@ -991,6 +995,7 @@
             }).join('');
         }
 
+        // RENDER DEPARTEMEN TANPA PREFIKS "BU " HARDCODED
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
@@ -1017,7 +1022,7 @@
                 return `
                     <div class="dept-row">
                         <div class="dept-info">
-                            <span class="dept-name">BU ${dept}</span>
+                            <span class="dept-name">${dept}</span>
                             <span class="dept-count">${count}x Digunakan</span>
                         </div>
                         <div class="progress-bar-bg">
