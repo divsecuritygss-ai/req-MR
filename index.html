@@ -699,7 +699,7 @@
 
     <!-- JavaScript Engine -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvSseH_9S9w2j86wA6Nrmh3sQvJc9iSOfH51X-m5_c5sJkK41y/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSrS96mtEmVlbmoC3Gdancg4HBIHEyZOYcrRIqSGs3hHq-IoPQWpqDsp2rMBd5xjCz/exec";
         const DEFAULT_PIN = "84L1";
         
         let isAdminMode = false;
@@ -799,14 +799,8 @@
 
             showLoading();
             try {
-                // Menggunakan URL Safe Construction untuk mencegah Syntax Error / 404 pada URL Params
-                const url = new URL(GOOGLE_SCRIPT_URL);
-                url.searchParams.set('action', 'READ');
-                url.searchParams.set('_t', Date.now().toString());
-
-                const response = await fetch(url.toString());
-                if (!response.ok) throw new Error("HTTP Status " + response.status);
-
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ&_t=${cacheBuster}`);
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
@@ -867,10 +861,7 @@
             const mm = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('checkInStartTime').value = `${hh}:${mm}`;
 
-            if (room.department) {
-                // Otomatis hapus "BU " dari field input jika ada
-                document.getElementById('checkInDept').value = room.department.replace(/^BU\s+/i, '');
-            }
+            if (room.department) document.getElementById('checkInDept').value = room.department;
             
             updateEndTimePreview();
             document.getElementById('checkInModal').style.display = 'flex';
@@ -879,10 +870,7 @@
         function processCheckIn(e) {
             e.preventDefault();
             const id = document.getElementById('checkInRoomId').value;
-            let dept = document.getElementById('checkInDept').value.trim().toUpperCase();
-            // Murni hapus awalan BU jika user tidak sengaja mengetik "BU SECURITY"
-            dept = dept.replace(/^BU\s+/i, '');
-
+            const dept = document.getElementById('checkInDept').value.trim().toUpperCase();
             const people = parseInt(document.getElementById('checkInPeople').value);
             const pic = document.getElementById('checkInPic').value.trim();
             const subject = document.getElementById('checkInSubject').value.trim();
@@ -893,7 +881,7 @@
             sendCloudAction({
                 action: "CHECK_IN",
                 id: id,
-                department: dept || "GENERAL",
+                department: dept || "UMUM",
                 peopleCount: people,
                 startTime: startTimeInput,
                 time: timeRangeText,
@@ -940,9 +928,7 @@
                 return;
             }
 
-            container.innerHTML = filteredRooms.map(room => {
-                const cleanDept = (room.department || 'GENERAL').replace(/^BU\s+/i, '');
-                return `
+            container.innerHTML = filteredRooms.map(room => `
                 <article class="room-card">
                     <div class="room-card-header">
                         <span class="location-badge-pill">${room.location}</span>
@@ -955,7 +941,7 @@
                         <h2 class="room-title-huge">${room.name}</h2>
                         <div class="capacity-row">
                             <span class="capacity-text">Kapasitas: ${room.capacity} orang</span>
-                            <span class="bu-dept-badge">${cleanDept}</span>
+                            <span class="bu-dept-badge">${room.department || 'GENERAL'}</span>
                         </div>
                     </div>
 
@@ -987,8 +973,7 @@
                         ` : ''}
                     </div>
                 </article>
-            `;
-            }).join('');
+            `).join('');
         }
 
         function renderPeakHoursAnalytics() {
@@ -1010,7 +995,7 @@
             }).join('');
         }
 
-        // DEPARTEMEN DITAMPILKAN BERSIH TANPA PREFIKS "BU "
+        // RENDER DEPARTEMEN TANPA PREFIKS "BU " HARDCODED
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
@@ -1034,13 +1019,10 @@
                 const color = colors[index % colors.length];
                 index++;
 
-                // Bersihkan teks "BU " baik huruf besar/kecil dari data historis
-                const cleanName = dept.replace(/^BU\s+/i, '');
-
                 return `
                     <div class="dept-row">
                         <div class="dept-info">
-                            <span class="dept-name">${cleanName}</span>
+                            <span class="dept-name">${dept}</span>
                             <span class="dept-count">${count}x Digunakan</span>
                         </div>
                         <div class="progress-bar-bg">
@@ -1063,8 +1045,7 @@
             const name = document.getElementById('roomName').value.trim();
             const location = document.getElementById('roomLocation').value.trim();
             const capacity = parseInt(document.getElementById('roomCapacity').value);
-            let department = document.getElementById('roomDepartment').value.trim().toUpperCase();
-            department = department.replace(/^BU\s+/i, '');
+            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
 
             sendCloudAction({
                 action: "ADD_ROOM",
