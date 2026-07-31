@@ -150,7 +150,7 @@
         .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value { font-size: 1.85rem; font-weight: 800; }
 
-        /* ANALYTICS GRID RESPONSIVE */
+        /* ANALYTICS GRID */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -165,6 +165,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            height: 340px; /* Terkunci konsisten di semua card */
         }
 
         .analytics-header {
@@ -186,7 +187,7 @@
             align-items: flex-end;
             justify-content: space-between;
             gap: 8px;
-            height: 140px;
+            height: 220px;
             padding-top: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -214,12 +215,30 @@
             color: var(--text-secondary);
         }
 
+        /* WADAH SCROLLABLE / ROLLING CONTAINER */
         .dept-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-height: 100px;
-            justify-content: center;
+            max-height: 230px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        /* Custom Scrollbar Ramping & Elegan */
+        .dept-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .dept-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+        .dept-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        .dept-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue-bright);
         }
 
         .dept-row {
@@ -570,10 +589,9 @@
             </div>
         </section>
 
-        <!-- ANALYTICS GRID (3 GRAFIK UTAMA) -->
+        <!-- ANALYTICS GRID (3 GRAFIK UTAMA SEJAJAR) -->
         <section class="analytics-grid">
             
-            <!-- 1. GRAFIK PEAK HOURS -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">📊 Peak Usage Hours</span>
@@ -582,7 +600,6 @@
                 <div class="chart-container" id="peakHoursContainer"></div>
             </div>
 
-            <!-- 2. GRAFIK DEPARTEMEN -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">🏢 Penggunaan Departemen</span>
@@ -591,7 +608,6 @@
                 <div class="dept-list" id="departmentStatsContainer"></div>
             </div>
 
-            <!-- 3. GRAFIK FREKUENSI RUANG MEETING -->
             <div class="analytics-card">
                 <div class="analytics-header">
                     <span class="analytics-title">🚪 Frekuensi Ruang Meeting</span>
@@ -786,11 +802,6 @@
         }
 
         async function sendCloudAction(payload) {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASANG_URL")) {
-                alert("Harap isi URL Google Script baru Anda di variabel GOOGLE_SCRIPT_URL.");
-                return;
-            }
-
             showLoading();
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
@@ -818,8 +829,6 @@
         }
 
         async function fetchCloudData() {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASANG_URL")) return;
-
             showLoading();
             try {
                 const cleanBaseUrl = GOOGLE_SCRIPT_URL.split('?')[0];
@@ -1072,7 +1081,7 @@
             }).join('');
         }
 
-        // RENDER ANALITIK FREKUENSI RUANG MEETING
+        // DEPARTEMEN & FREKUENSI RUANGAN DENGAN CONTAINER SCROLLING TINGGI TERKONTROL
         function renderRoomAnalytics() {
             const container = document.getElementById('roomStatsContainer');
             const roomKeys = Object.keys(roomUsage).filter(r => roomUsage[r] > 0);
@@ -1086,7 +1095,7 @@
                 return;
             }
 
-            // Urutkan dari ruangan yang paling banyak di-booking
+            // Urutkan dari ruangan terbanyak di-booking
             roomKeys.sort((a, b) => roomUsage[b] - roomUsage[a]);
 
             const maxUsage = Math.max(...roomKeys.map(k => roomUsage[k]), 1);
