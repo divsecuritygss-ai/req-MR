@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Meeting Room Hub - Professional Cloud Engine</title>
+    <title>Meeting Room Hub - Professional Analytics Engine</title>
     <style>
         :root {
             --bg-main: #090c13;
@@ -150,6 +150,7 @@
         .stat-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value { font-size: 1.85rem; font-weight: 800; }
 
+        /* ANALYTICS GRID RESPONSIVE */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -521,8 +522,14 @@
         }
 
         @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (min-width: 768px) { .analytics-grid { grid-template-columns: 3fr 2fr; } .rooms-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1024px) { .rooms-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 768px) { 
+            .analytics-grid { grid-template-columns: repeat(2, 1fr); } 
+            .rooms-grid { grid-template-columns: repeat(2, 1fr); } 
+        }
+        @media (min-width: 1024px) { 
+            .analytics-grid { grid-template-columns: repeat(3, 1fr); }
+            .rooms-grid { grid-template-columns: repeat(3, 1fr); } 
+        }
     </style>
 </head>
 <body>
@@ -563,22 +570,36 @@
             </div>
         </section>
 
+        <!-- ANALYTICS GRID (3 GRAFIK UTAMA) -->
         <section class="analytics-grid">
+            
+            <!-- 1. GRAFIK PEAK HOURS -->
             <div class="analytics-card">
                 <div class="analytics-header">
-                    <span class="analytics-title">📊 Peak Usage Hours (Jam Penggunaan)</span>
+                    <span class="analytics-title">📊 Peak Usage Hours</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary);">Hari Ini</span>
                 </div>
                 <div class="chart-container" id="peakHoursContainer"></div>
             </div>
 
+            <!-- 2. GRAFIK DEPARTEMEN -->
             <div class="analytics-card">
                 <div class="analytics-header">
-                    <span class="analytics-title">🏢 Penggunaan Departemen / Unit</span>
+                    <span class="analytics-title">🏢 Penggunaan Departemen</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary);">Total Frekuensi</span>
                 </div>
                 <div class="dept-list" id="departmentStatsContainer"></div>
             </div>
+
+            <!-- 3. GRAFIK FREKUENSI RUANG MEETING -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <span class="analytics-title">🚪 Frekuensi Ruang Meeting</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Total Booking</span>
+                </div>
+                <div class="dept-list" id="roomStatsContainer"></div>
+            </div>
+
         </section>
 
         <section class="controls-bar">
@@ -707,6 +728,7 @@
         let rooms = [];
         let deptUsage = {};
         let hourlyUsage = { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
+        let roomUsage = {};
 
         function showLoading() { document.getElementById('loadingIndicator').style.display = 'block'; }
         function hideLoading() { document.getElementById('loadingIndicator').style.display = 'none'; }
@@ -782,6 +804,7 @@
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
                     hourlyUsage = data.hourlyUsage || { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
+                    roomUsage = data.roomUsage || {};
                     renderDashboard();
                 } else {
                     alert("Respon Cloud: " + (data.message || "Gagal memperbarui data"));
@@ -799,13 +822,20 @@
 
             showLoading();
             try {
-                const cacheBuster = new Date().getTime();
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=READ&_t=${cacheBuster}`);
+                const cleanBaseUrl = GOOGLE_SCRIPT_URL.split('?')[0];
+                const url = new URL(cleanBaseUrl);
+                url.searchParams.set('action', 'READ');
+                url.searchParams.set('_t', Date.now().toString());
+
+                const response = await fetch(url.toString());
+                if (!response.ok) throw new Error("HTTP Status " + response.status);
+
                 const data = await response.json();
                 if (data.status === "SUCCESS") {
                     rooms = data.rooms || [];
                     deptUsage = data.deptUsage || {};
                     hourlyUsage = data.hourlyUsage || { '08:00': 0, '10:00': 0, '13:00': 0, '15:00': 0, '17:00': 0 };
+                    roomUsage = data.roomUsage || {};
                     renderDashboard();
                     checkLocalUnsyncedData();
                 }
@@ -861,7 +891,9 @@
             const mm = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('checkInStartTime').value = `${hh}:${mm}`;
 
-            if (room.department) document.getElementById('checkInDept').value = room.department;
+            if (room.department) {
+                document.getElementById('checkInDept').value = room.department.replace(/^BU\s+/i, '');
+            }
             
             updateEndTimePreview();
             document.getElementById('checkInModal').style.display = 'flex';
@@ -870,7 +902,9 @@
         function processCheckIn(e) {
             e.preventDefault();
             const id = document.getElementById('checkInRoomId').value;
-            const dept = document.getElementById('checkInDept').value.trim().toUpperCase();
+            let dept = document.getElementById('checkInDept').value.trim().toUpperCase();
+            dept = dept.replace(/^BU\s+/i, '');
+
             const people = parseInt(document.getElementById('checkInPeople').value);
             const pic = document.getElementById('checkInPic').value.trim();
             const subject = document.getElementById('checkInSubject').value.trim();
@@ -881,7 +915,7 @@
             sendCloudAction({
                 action: "CHECK_IN",
                 id: id,
-                department: dept || "UMUM",
+                department: dept || "GENERAL",
                 peopleCount: people,
                 startTime: startTimeInput,
                 time: timeRangeText,
@@ -911,6 +945,7 @@
 
             renderPeakHoursAnalytics();
             renderDepartmentAnalytics();
+            renderRoomAnalytics();
 
             let filteredRooms = rooms;
             if (activeFilter !== 'ALL') {
@@ -928,7 +963,9 @@
                 return;
             }
 
-            container.innerHTML = filteredRooms.map(room => `
+            container.innerHTML = filteredRooms.map(room => {
+                const cleanDept = (room.department || 'GENERAL').replace(/^BU\s+/i, '');
+                return `
                 <article class="room-card">
                     <div class="room-card-header">
                         <span class="location-badge-pill">${room.location}</span>
@@ -941,7 +978,7 @@
                         <h2 class="room-title-huge">${room.name}</h2>
                         <div class="capacity-row">
                             <span class="capacity-text">Kapasitas: ${room.capacity} orang</span>
-                            <span class="bu-dept-badge">${room.department || 'GENERAL'}</span>
+                            <span class="bu-dept-badge">${cleanDept}</span>
                         </div>
                     </div>
 
@@ -973,7 +1010,8 @@
                         ` : ''}
                     </div>
                 </article>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function renderPeakHoursAnalytics() {
@@ -995,7 +1033,6 @@
             }).join('');
         }
 
-        // RENDER DEPARTEMEN TANPA PREFIKS "BU " HARDCODED
         function renderDepartmentAnalytics() {
             const container = document.getElementById('departmentStatsContainer');
             const deptKeys = Object.keys(deptUsage).filter(dept => deptUsage[dept] > 0);
@@ -1019,11 +1056,54 @@
                 const color = colors[index % colors.length];
                 index++;
 
+                const cleanName = dept.replace(/^BU\s+/i, '');
+
                 return `
                     <div class="dept-row">
                         <div class="dept-info">
-                            <span class="dept-name">${dept}</span>
+                            <span class="dept-name">${cleanName}</span>
                             <span class="dept-count">${count}x Digunakan</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // RENDER ANALITIK FREKUENSI RUANG MEETING
+        function renderRoomAnalytics() {
+            const container = document.getElementById('roomStatsContainer');
+            const roomKeys = Object.keys(roomUsage).filter(r => roomUsage[r] > 0);
+
+            if (roomKeys.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
+                        <span>📋 Belum ada data check-in per ruangan</span>
+                    </div>
+                `;
+                return;
+            }
+
+            // Urutkan dari ruangan yang paling banyak di-booking
+            roomKeys.sort((a, b) => roomUsage[b] - roomUsage[a]);
+
+            const maxUsage = Math.max(...roomKeys.map(k => roomUsage[k]), 1);
+            const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#f43f5e'];
+            let index = 0;
+
+            container.innerHTML = roomKeys.map(roomName => {
+                const count = roomUsage[roomName] || 0;
+                const barWidth = Math.round((count / maxUsage) * 100);
+                const color = colors[index % colors.length];
+                index++;
+
+                return `
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-name">${roomName}</span>
+                            <span class="dept-count">${count}x Check-In</span>
                         </div>
                         <div class="progress-bar-bg">
                             <div class="progress-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
@@ -1045,7 +1125,8 @@
             const name = document.getElementById('roomName').value.trim();
             const location = document.getElementById('roomLocation').value.trim();
             const capacity = parseInt(document.getElementById('roomCapacity').value);
-            const department = document.getElementById('roomDepartment').value.trim().toUpperCase();
+            let department = document.getElementById('roomDepartment').value.trim().toUpperCase();
+            department = department.replace(/^BU\s+/i, '');
 
             sendCloudAction({
                 action: "ADD_ROOM",
